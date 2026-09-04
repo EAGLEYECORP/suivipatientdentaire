@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-slate-100 text-slate-800 antialiased;
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-1 ring-offset-white;
+  }
+}
+
+@layer components {
+  .champ {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 disabled:bg-slate-100;
+  }
+  .etiquette {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .carte {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    @apply bg-white;
+  }
+
+  /* Printing while a dialog is open (an invoice, say) prints the dialog alone. */
+  body:has(.modal-ouverte) > #root {
+    display: none !important;
+  }
+  .modal-ouverte {
+    position: static !important;
+    overflow: visible !important;
+    background: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+  }
+  .modal-ouverte > div {
+    margin: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+}
