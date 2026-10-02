@@ -309,12 +309,12 @@ describe('intervalle de rappel', () => {
     const paro = evaluerRisqueParodontal(p, undefined, []);
     const r = intervalleRappelConseille(carie, paro);
     expect(r.mois).toBe(3);
-    expect(r.motif).toMatch(/parodontal/);
+    expect(r.motif).toBe('risque parodontal élevé');
   });
 
   it('peut être dicté par le risque carieux', () => {
     const carie = evaluerRisqueCarieux(patient(), [dent(26, 'carie')]);
     const paro = evaluerRisqueParodontal(patient(), undefined, []);
-    expect(intervalleRappelConseille(carie, paro).motif).toMatch(/carieux/);
+    expect(intervalleRappelConseille(carie, paro).motif).toBe('risque carieux élevé');
   });
 });

@@ -479,13 +479,23 @@ export function evaluerRisqueParodontal(
   };
 }
 
+export const LIBELLE_NIVEAU: Record<NiveauRisque, string> = {
+  faible: 'faible',
+  modere: 'modéré',
+  eleve: 'élevé',
+  extreme: 'extrême',
+};
+
 /** Intervalle de rappel conseillé : le plus court des deux profils de risque. */
 export function intervalleRappelConseille(
   carie: EvaluationRisque,
   parodontal: RisqueParodontal,
 ): { mois: number; motif: string } {
   if (carie.intervalleRappelMois <= parodontal.intervalleRappelMois) {
-    return { mois: carie.intervalleRappelMois, motif: `risque carieux ${carie.niveau}` };
+    return { mois: carie.intervalleRappelMois, motif: `risque carieux ${LIBELLE_NIVEAU[carie.niveau]}` };
   }
-  return { mois: parodontal.intervalleRappelMois, motif: `risque parodontal ${parodontal.niveau}` };
+  return {
+    mois: parodontal.intervalleRappelMois,
+    motif: `risque parodontal ${LIBELLE_NIVEAU[parodontal.niveau]}`,
+  };
 }

@@ -4,7 +4,9 @@ Logiciel de cabinet dentaire : **odontogramme anatomique**, **charting parodonta
 automatique**, imagerie, aide à la décision clinique, plans de traitement, agenda, facturation et
 pilotage. Interface en français, fonctionnement **hors ligne**, données **chiffrées sur le poste**.
 
-![Odontogramme anatomique](docs/odontogramme.png)
+![Odontogramme anatomique](docs/03-odontogramme.png)
+
+**[→ Galerie complète : 19 captures de tous les modules](docs/CAPTURES.md)**
 
 ---
 
@@ -25,7 +27,7 @@ pilotage. Interface en français, fonctionnement **hors ligne**, données **chif
 
 ### Odontogramme anatomique
 
-![Charting parodontal](docs/parodontie.png)
+![Charting parodontal](docs/06-charting-parodontal.png)
 
 - Numérotation **FDI / ISO 3950** : 32 dents permanentes, 20 temporaires.
 - Chaque couronne est dessinée à ses **dimensions anatomiques moyennes** (diamètres mésio-distal et
@@ -60,7 +62,7 @@ dents **non adjacentes**, et les dents absentes sont exclues des indices.
 
 ### Aide à la décision clinique
 
-![Vigilance clinique](docs/vigilance.png)
+![Vigilance clinique](docs/10-aide-decision.png)
 
 Des règles déterministes, chacune motivée par la donnée qui l'a déclenchée :
 
@@ -95,7 +97,7 @@ Le tableau de bord agrège la vigilance sur l'ensemble du cabinet.
 
 ### Devis à variantes
 
-![Devis comparés](docs/devis.png)
+![Devis comparés](docs/08-devis-variantes.png)
 
 - Plusieurs solutions thérapeutiques **présentées côte à côte**, avec honoraires, base de
   remboursement et reste à charge, et mise en évidence de l'option la moins coûteuse.
@@ -116,7 +118,7 @@ Le tableau de bord agrège la vigilance sur l'ensemble du cabinet.
 
 ### Pilotage du cabinet
 
-![Pilotage](docs/pilotage.png)
+![Pilotage](docs/16-pilotage.png)
 
 Encaissements, taux de recouvrement, **taux d'acceptation des devis** (en nombre et en valeur, calculé
 sur les seuls devis décidés), taux de rendez-vous non honorés, charge par praticien, répartition des
@@ -125,7 +127,7 @@ actes, **actes réalisés jamais facturés**, et **moteur de rappels** listant l
 
 ### Palette de commandes
 
-![Palette ⌘K](docs/palette.png)
+![Palette ⌘K](docs/17-palette.png)
 
 `⌘K` / `Ctrl+K` ouvre n'importe quel dossier, écran ou action sans quitter le clavier, avec recherche
 insensible aux accents sur nom, téléphone, e-mail, numéro de sécurité sociale et mutuelle.
