@@ -10,6 +10,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Modal } from '@/components/ui/Modal';
 import { DentalChart, LegendeEtats } from '@/components/DentalChart';
+import { OdontogrammeArcade } from '@/components/OdontogrammeArcade';
 import { ToothPanel } from '@/components/ToothPanel';
 import { PatientForm } from '@/components/PatientForm';
 import { ActeForm } from '@/components/ActeForm';
@@ -74,6 +75,7 @@ export function PatientDetail() {
   const [onglet, setOnglet] = useState<Onglet>('schema');
   const [selection, setSelection] = useState<number[]>([]);
   const [pinceau, setPinceau] = useState<EtatDent | null>(null);
+  const [vueSchema, setVueSchema] = useState<'arcade' | 'grille'>('arcade');
   const [editionPatient, setEditionPatient] = useState(false);
   const [suppression, setSuppression] = useState(false);
   const [acteForm, setActeForm] = useState<{ ouvert: boolean; acte?: Acte }>({ ouvert: false });
@@ -285,15 +287,39 @@ export function PatientDetail() {
               titre="Schéma dentaire"
               sousTitre="Cliquez une dent pour la sélectionner, ou choisissez un état pour peindre les faces."
               action={
-                <Select
-                  value={odonto.dentition}
-                  onChange={(e) => changerDentition(id, e.target.value as 'permanente' | 'temporaire')}
-                  className="w-52"
-                  aria-label="Type de dentition"
-                >
-                  <option value="permanente">Dentition permanente</option>
-                  <option value="temporaire">Dentition temporaire</option>
-                </Select>
+                <>
+                  <div className="flex overflow-hidden rounded-lg border border-slate-300">
+                    {(
+                      [
+                        ['arcade', 'Arcade'],
+                        ['grille', 'Grille'],
+                      ] as const
+                    ).map(([cle, label]) => (
+                      <button
+                        key={cle}
+                        type="button"
+                        onClick={() => setVueSchema(cle)}
+                        className={cx(
+                          'px-3 py-1.5 text-xs font-semibold',
+                          vueSchema === cle
+                            ? 'bg-brand-600 text-white'
+                            : 'bg-white text-slate-600 hover:bg-slate-50',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <Select
+                    value={odonto.dentition}
+                    onChange={(e) => changerDentition(id, e.target.value as 'permanente' | 'temporaire')}
+                    className="w-52"
+                    aria-label="Type de dentition"
+                  >
+                    <option value="permanente">Dentition permanente</option>
+                    <option value="temporaire">Dentition temporaire</option>
+                  </Select>
+                </>
               }
             />
             <CardBody>
@@ -310,14 +336,25 @@ export function PatientDetail() {
                 </p>
               ) : null}
 
-              <DentalChart
-                dentition={odonto.dentition}
-                etats={etatsParDent}
-                selection={selection}
-                onSelectionDent={basculerSelection}
-                pinceau={pinceau}
-                onPeindreFace={peindreFace}
-              />
+              {vueSchema === 'arcade' ? (
+                <OdontogrammeArcade
+                  dentition={odonto.dentition}
+                  etats={etatsParDent}
+                  selection={selection}
+                  onSelectionDent={basculerSelection}
+                  pinceau={pinceau}
+                  onPeindreFace={peindreFace}
+                />
+              ) : (
+                <DentalChart
+                  dentition={odonto.dentition}
+                  etats={etatsParDent}
+                  selection={selection}
+                  onSelectionDent={basculerSelection}
+                  pinceau={pinceau}
+                  onPeindreFace={peindreFace}
+                />
+              )}
 
               {selection.length > 1 ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
