@@ -26,7 +26,7 @@ describe('application', () => {
     await user.click(lien);
 
     expect(await screen.findByRole('heading', { name: /marie durand/i })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /schéma dentaire interactif/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /schéma dentaire anatomique/i })).toBeInTheDocument();
   });
 
   it('permet de sélectionner une dent et d’en modifier l’état', async () => {
@@ -35,6 +35,8 @@ describe('application', () => {
     await user.click(screen.getByRole('link', { name: /patients/i }));
     await user.click(await screen.findByText('Marie Durand'));
 
+    // La vue grille reste disponible et sert ici de surface de test stable.
+    await user.click(await screen.findByRole('button', { name: /^grille$/i }));
     const schema = await screen.findByRole('img', { name: /schéma dentaire interactif/i });
     const zones = within(schema).getAllByLabelText(/^Dent 21 — face/);
     await user.click(zones[0]);
@@ -65,5 +67,40 @@ describe('application', () => {
     await user.click(within(dialogue).getByRole('button', { name: /créer le dossier/i }));
 
     expect(await screen.findByRole('heading', { name: /giulia rossi/i })).toBeInTheDocument();
+  });
+});
+
+describe('charting parodontal', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.location.hash = '';
+  });
+
+  it('affiche le diagnostic 2018 calculé à partir du sondage', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('link', { name: /patients/i }));
+    await user.click(await screen.findByText('Thomas Bernard'));
+    await user.click(await screen.findByRole('button', { name: /parodontie/i }));
+
+    expect(await screen.findByText(/parodontite/i)).toBeInTheDocument();
+    expect(screen.getByText('Stade III')).toBeInTheDocument();
+    expect(screen.getByText('Grade C')).toBeInTheDocument();
+    expect(screen.getByText(/raisonnement/i)).toBeInTheDocument();
+    // La 47 étant absente, elle ne doit pas peser dans le décompte.
+    expect(screen.getByText(/sur 31 dent\(s\)/)).toBeInTheDocument();
+  });
+
+  it('exclut du sondage les dents absentes du schéma', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('link', { name: /patients/i }));
+    await user.click(await screen.findByText('Thomas Bernard'));
+    await user.click(await screen.findByRole('button', { name: /parodontie/i }));
+
+    // La 47 est absente chez ce patient : ses cases sont désactivées et vides.
+    const cellule = await screen.findByLabelText('Profondeur dent 47 site MV');
+    expect(cellule).toBeDisabled();
+    expect(cellule).toHaveValue('');
   });
 });

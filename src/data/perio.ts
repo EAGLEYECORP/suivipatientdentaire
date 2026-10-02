@@ -126,7 +126,11 @@ export interface IndicesParo {
   mobilitesAtteintes: number;
 }
 
-export function calculerIndices(charting: ChartingParo): IndicesParo {
+/**
+ * Agrège les mesures. Les dents absentes de la bouche sont exclues : elles ne
+ * doivent peser ni sur les indices ni sur la stadification.
+ */
+export function calculerIndices(charting: ChartingParo, absentes: number[] = []): IndicesParo {
   let sitesSondes = 0;
   let bop = 0;
   let plaque = 0;
@@ -143,7 +147,9 @@ export function calculerIndices(charting: ChartingParo): IndicesParo {
 
   const dentsAvecPerte: number[] = [];
 
-  for (const dent of charting.dents) {
+  const dentsPresentes = charting.dents.filter((d) => !absentes.includes(d.numero));
+
+  for (const dent of dentsPresentes) {
     let dentSondee = false;
     let dentAtteinte = false;
     let perteInterdentaire = false;
@@ -178,7 +184,7 @@ export function calculerIndices(charting: ChartingParo): IndicesParo {
   return {
     sitesSondes,
     bopPct: pct(bop, sitesSondes),
-    plaquePct: pct(plaque, charting.dents.length * SITES_PERIO.length),
+    plaquePct: pct(plaque, dentsPresentes.length * SITES_PERIO.length),
     poches4Pct: pct(p4, sitesSondes),
     poches6Pct: pct(p6, sitesSondes),
     pdMax,
@@ -218,8 +224,13 @@ export interface DiagnosticParo {
  * manière déterministe et entièrement traçable : chaque critère retenu est
  * restitué au praticien, qui reste seul juge du diagnostic final.
  */
-export function diagnostiquer(charting: ChartingParo, ageAnnees: number, dentsAbsentes: number): DiagnosticParo {
-  const indices = calculerIndices(charting);
+export function diagnostiquer(
+  charting: ChartingParo,
+  ageAnnees: number,
+  absentes: number[] = [],
+): DiagnosticParo {
+  const indices = calculerIndices(charting, absentes);
+  const dentsAbsentes = absentes.length;
   const justifications: string[] = [];
 
   if (indices.sitesSondes === 0) {
@@ -270,7 +281,7 @@ export function diagnostiquer(charting: ChartingParo, ageAnnees: number, dentsAb
   else if (indices.calInterdentaireMax <= 4) stade = 'II';
   else stade = 'III';
   justifications.push(
-    `Perte d'attache interdentaire maximale ${indices.calInterdentaireMax} mm sur ${indices.dentsAvecPerte.length} dents non adjacentes → stade ${stade} (sévérité).`,
+    `Perte d'attache interdentaire maximale ${indices.calInterdentaireMax} mm, sur ${indices.dentsAvecPerte.length} dent(s) dont au moins deux non adjacentes → stade ${stade} (sévérité).`,
   );
 
   if (stade === 'III' || stade === 'II') {
@@ -340,7 +351,9 @@ export function diagnostiquer(charting: ChartingParo, ageAnnees: number, dentsAb
     etendue = 'incisivo_molaire';
     justifications.push('Atteinte limitée aux incisives et aux molaires → forme incisivo-molaire.');
   } else {
-    justifications.push(`${indices.etenduePct} % des dents atteintes → forme ${etendue}.`);
+    justifications.push(
+      `${indices.etenduePct} % des dents atteintes → forme ${etendue === 'generalisee' ? 'généralisée' : 'localisée'}.`,
+    );
   }
 
   // Stabilité après traitement (EFP 2018).

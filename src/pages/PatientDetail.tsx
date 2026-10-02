@@ -13,6 +13,7 @@ import { DentalChart, LegendeEtats } from '@/components/DentalChart';
 import { OdontogrammeArcade } from '@/components/OdontogrammeArcade';
 import { ToothPanel } from '@/components/ToothPanel';
 import { PatientForm } from '@/components/PatientForm';
+import { OngletParodontie } from '@/components/perio/OngletParodontie';
 import { ActeForm } from '@/components/ActeForm';
 import type { BrouillonActe } from '@/components/ActeForm';
 import { RdvForm } from '@/components/RdvForm';
@@ -31,10 +32,11 @@ import {
   maintenant,
 } from '@/lib/utils';
 
-type Onglet = 'schema' | 'traitements' | 'agenda' | 'notes' | 'facturation' | 'dossier';
+type Onglet = 'schema' | 'parodontie' | 'traitements' | 'agenda' | 'notes' | 'facturation' | 'dossier';
 
 const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'schema', label: 'Schéma dentaire' },
+  { cle: 'parodontie', label: 'Parodontie' },
   { cle: 'traitements', label: 'Plan de traitement' },
   { cle: 'agenda', label: 'Rendez-vous' },
   { cle: 'notes', label: 'Notes cliniques' },
@@ -407,6 +409,8 @@ export function PatientDetail() {
           </Card>
         </div>
       ) : null}
+
+      {onglet === 'parodontie' ? <OngletParodontie patient={patient} /> : null}
 
       {onglet === 'traitements' ? (
         <Card>

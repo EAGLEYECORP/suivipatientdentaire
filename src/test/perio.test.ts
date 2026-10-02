@@ -77,7 +77,7 @@ describe('mesures parodontales', () => {
 
 describe('classification 2018 (AAP/EFP)', () => {
   it('conclut à un parodonte sain sans perte d’attache ni saignement', () => {
-    const d = diagnostiquer(charting({ pd: 2, rec: 0, bop: false }), 40, 0);
+    const d = diagnostiquer(charting({ pd: 2, rec: 0, bop: false }), 40, []);
     expect(d.gingiviteSeule).toBe(true);
     expect(d.libelle).toMatch(/sain/i);
     expect(d.stabilite).toBe('stable');
@@ -90,66 +90,66 @@ describe('classification 2018 (AAP/EFP)', () => {
       36: { bop: true },
       46: { bop: true },
     };
-    expect(diagnostiquer(charting({ bop: false }, peu), 30, 0).libelle).toBe('Gingivite localisée');
-    expect(diagnostiquer(charting({ bop: true }), 30, 0).libelle).toBe('Gingivite généralisée');
+    expect(diagnostiquer(charting({ bop: false }, peu), 30, []).libelle).toBe('Gingivite localisée');
+    expect(diagnostiquer(charting({ bop: true }), 30, []).libelle).toBe('Gingivite généralisée');
   });
 
   it('classe un stade I sur une perte d’attache interdentaire de 1 à 2 mm', () => {
-    const d = diagnostiquer(charting({ pd: 1, rec: 1, bop: true }), 45, 0);
+    const d = diagnostiquer(charting({ pd: 1, rec: 1, bop: true }), 45, []);
     expect(d.gingiviteSeule).toBe(false);
     expect(d.stade).toBe('I');
     expect(d.libelle).toContain('stade I');
   });
 
   it('classe un stade II entre 3 et 4 mm de perte d’attache', () => {
-    expect(diagnostiquer(charting({ pd: 2, rec: 1, bop: true }), 45, 0).stade).toBe('II');
+    expect(diagnostiquer(charting({ pd: 2, rec: 1, bop: true }), 45, []).stade).toBe('II');
   });
 
   it('passe en stade III au-delà de 5 mm, ou sur une poche ≥ 6 mm', () => {
-    expect(diagnostiquer(charting({ pd: 3, rec: 2, bop: true }), 45, 0).stade).toBe('III');
-    const pocheProfonde = diagnostiquer(charting({ pd: 6, rec: 0, bop: true }), 45, 0);
+    expect(diagnostiquer(charting({ pd: 3, rec: 2, bop: true }), 45, []).stade).toBe('III');
+    const pocheProfonde = diagnostiquer(charting({ pd: 6, rec: 0, bop: true }), 45, []);
     expect(pocheProfonde.stade).toBe('III');
     expect(pocheProfonde.justifications.join(' ')).toMatch(/6 mm/);
   });
 
   it('passe en stade IV quand la réhabilitation devient complexe', () => {
-    expect(diagnostiquer(charting({ pd: 2, rec: 1, bop: true }), 60, 6).stade).toBe('IV');
+    expect(diagnostiquer(charting({ pd: 2, rec: 1, bop: true }), 60, [17, 27, 37, 47, 36, 46]).stade).toBe('IV');
   });
 
   it('déduit le grade du rapport perte osseuse / âge', () => {
     const lent = charting({ pd: 2, rec: 1, bop: true });
     lent.perteOsseusePct = 10;
-    expect(diagnostiquer(lent, 60, 0).grade).toBe('A');
+    expect(diagnostiquer(lent, 60, []).grade).toBe('A');
 
     const rapide = charting({ pd: 2, rec: 1, bop: true });
     rapide.perteOsseusePct = 50;
-    expect(diagnostiquer(rapide, 35, 0).grade).toBe('C');
+    expect(diagnostiquer(rapide, 35, []).grade).toBe('C');
   });
 
   it('aggrave le grade pour un gros fumeur ou un diabète déséquilibré', () => {
     const fumeur = charting({ pd: 2, rec: 1, bop: true });
     fumeur.perteOsseusePct = 10;
     fumeur.fumeur = 'dix_ou_plus';
-    const d = diagnostiquer(fumeur, 60, 0);
+    const d = diagnostiquer(fumeur, 60, []);
     expect(d.grade).toBe('C');
     expect(d.justifications.join(' ')).toMatch(/Tabagisme/);
 
     const diabetique = charting({ pd: 2, rec: 1, bop: true });
     diabetique.diabete = 'desequilibre';
-    expect(diagnostiquer(diabetique, 50, 0).grade).toBe('C');
+    expect(diagnostiquer(diabetique, 50, []).grade).toBe('C');
   });
 
   it('qualifie l’étendue selon la proportion de dents atteintes', () => {
     const quelques: Record<number, Reglage> = { 16: { rec: 2 }, 26: { rec: 2 } };
-    expect(diagnostiquer(charting({ pd: 2, rec: 0 }, quelques), 50, 0).etendue).toBe('localisee');
-    expect(diagnostiquer(charting({ pd: 2, rec: 2 }), 50, 0).etendue).toBe('generalisee');
+    expect(diagnostiquer(charting({ pd: 2, rec: 0 }, quelques), 50, []).etendue).toBe('localisee');
+    expect(diagnostiquer(charting({ pd: 2, rec: 2 }), 50, []).etendue).toBe('generalisee');
   });
 
   it('juge la stabilité après traitement', () => {
     const traite = charting({ pd: 2, rec: 2, bop: false });
-    expect(diagnostiquer(traite, 50, 0).stabilite).toBe('stable');
+    expect(diagnostiquer(traite, 50, []).stabilite).toBe('stable');
     const actif = charting({ pd: 5, rec: 2, bop: true });
-    expect(diagnostiquer(actif, 50, 0).stabilite).toBe('instable');
+    expect(diagnostiquer(actif, 50, []).stabilite).toBe('instable');
   });
 
   it('refuse de conclure sans sondage', () => {
@@ -159,14 +159,14 @@ describe('classification 2018 (AAP/EFP)', () => {
         d.sites[s] = { pd: null, rec: null, bop: false, plaque: false, pus: false };
       }
     }
-    const diag = diagnostiquer(vide, 40, 0);
+    const diag = diagnostiquer(vide, 40, []);
     expect(diag.stade).toBeNull();
     expect(diag.stabilite).toBe('non_evaluable');
     expect(diag.libelle).toMatch(/non calculable/i);
   });
 
   it('restitue toujours le raisonnement au praticien', () => {
-    const d = diagnostiquer(charting({ pd: 4, rec: 2, bop: true }), 45, 0);
+    const d = diagnostiquer(charting({ pd: 4, rec: 2, bop: true }), 45, []);
     expect(d.justifications.length).toBeGreaterThan(2);
     expect(d.justifications.join(' ')).toMatch(/Perte d'attache interdentaire/);
   });
@@ -212,8 +212,34 @@ describe('adjacence des dents', () => {
 
   it('ne diagnostique pas une parodontite sur deux dents adjacentes seulement', () => {
     const voisines: Record<number, Reglage> = { 16: { pd: 4, rec: 2 }, 15: { pd: 4, rec: 2 } };
-    const d = diagnostiquer(charting({ pd: 2, rec: 0 }, voisines), 45, 0);
+    const d = diagnostiquer(charting({ pd: 2, rec: 0 }, voisines), 45, []);
     expect(d.gingiviteSeule).toBe(true);
     expect(d.justifications.join(' ')).toMatch(/adjacentes/);
+  });
+});
+
+describe('dents absentes', () => {
+  it('exclut les dents absentes des indices', () => {
+    const c = charting({ pd: 6, rec: 2, bop: true });
+    const complet = calculerIndices(c);
+    const partiel = calculerIndices(c, [16, 26, 36, 46]);
+    expect(complet.sitesSondes).toBe(32 * 6);
+    expect(partiel.sitesSondes).toBe(28 * 6);
+    expect(partiel.dentsSondees).toBe(28);
+  });
+
+  it('ne laisse pas une dent absente peser sur le diagnostic', () => {
+    // Seules deux molaires sont atteintes ; si on les retire de la bouche,
+    // il ne reste plus de parodontite.
+    const atteintes: Record<number, Reglage> = { 16: { pd: 6, rec: 3 }, 46: { pd: 6, rec: 3 } };
+    const c = charting({ pd: 2, rec: 0 }, atteintes);
+    expect(diagnostiquer(c, 50, []).gingiviteSeule).toBe(false);
+    expect(diagnostiquer(c, 50, [16, 46]).gingiviteSeule).toBe(true);
+  });
+
+  it('compte les dents absentes dans la complexité du stade IV', () => {
+    const c = charting({ pd: 2, rec: 1, bop: true });
+    expect(diagnostiquer(c, 55, [18, 28, 38]).stade).not.toBe('IV');
+    expect(diagnostiquer(c, 55, [18, 28, 38, 48, 17]).stade).toBe('IV');
   });
 });
