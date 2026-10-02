@@ -944,7 +944,7 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
         libelle: l.libelle,
         statut: 'planifie',
         tarif: l.tarif,
-        baseRemboursement: l.baseRemboursement,
+        tarifReference: l.tarifReference,
         seance: i + 1,
         praticien: devis.praticien,
         datePrevue: new Date().toISOString().slice(0, 10),

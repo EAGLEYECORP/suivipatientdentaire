@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
-import { CATALOGUE_ACTES, CATEGORIES_ACTES, trouverActe } from '@/data/actes';
+import { actesDe, categoriesDe, tauxRegime, trouverActeDans } from '@/data/nomenclatures';
 import { devisExpire, totauxVariante } from '@/lib/finance';
 import { aujourdHui, cx, formatDate, formatMontant, uid } from '@/lib/utils';
 
@@ -27,8 +27,8 @@ const LIBELLE_STATUT = {
   expire: 'Expiré',
 } as const;
 
-function ligneVide(): LigneDevis {
-  const m = CATALOGUE_ACTES[0];
+function ligneVide(nomenclature: string): LigneDevis {
+  const m = actesDe(nomenclature)[0];
   return {
     id: uid('lig'),
     codeActe: m.code,
@@ -36,12 +36,12 @@ function ligneVide(): LigneDevis {
     dents: [],
     quantite: 1,
     tarif: m.tarif,
-    baseRemboursement: m.baseRemboursement,
+    tarifReference: m.tarifReference,
   };
 }
 
-function varianteVide(nom: string): VarianteDevis {
-  return { id: uid('var'), nom, description: '', lignes: [ligneVide()] };
+function varianteVide(nom: string, nomenclature: string): VarianteDevis {
+  return { id: uid('var'), nom, description: '', lignes: [ligneVide(nomenclature)] };
 }
 
 /** Édition d'une option thérapeutique : ses lignes d'actes et son total. */
@@ -50,13 +50,17 @@ function EditeurVariante({
   onChange,
   onSupprimer,
   devise,
+  nomenclature,
+  taux,
 }: {
   variante: VarianteDevis;
   onChange: (v: VarianteDevis) => void;
   onSupprimer: () => void;
   devise: string;
+  nomenclature: string;
+  taux: number;
 }) {
-  const t = totauxVariante(variante);
+  const t = totauxVariante(variante, taux);
   const majLigne = (id: string, patch: Partial<LigneDevis>) =>
     onChange({ ...variante, lignes: variante.lignes.map((l) => (l.id === id ? { ...l, ...patch } : l)) });
 
@@ -89,23 +93,25 @@ function EditeurVariante({
               value={l.codeActe}
               aria-label="Acte"
               onChange={(e) => {
-                const m = trouverActe(e.target.value);
+                const m = trouverActeDans(nomenclature, e.target.value);
                 if (!m) return;
                 majLigne(l.id, {
                   codeActe: m.code,
                   libelle: m.libelle,
                   tarif: m.tarif,
-                  baseRemboursement: m.baseRemboursement,
+                  tarifReference: m.tarifReference,
                 });
               }}
             >
-              {CATEGORIES_ACTES.map((cat) => (
+              {categoriesDe(nomenclature).map((cat) => (
                 <optgroup key={cat} label={cat}>
-                  {CATALOGUE_ACTES.filter((a) => a.categorie === cat).map((a) => (
-                    <option key={a.code} value={a.code}>
-                      {a.libelle}
-                    </option>
-                  ))}
+                  {actesDe(nomenclature)
+                    .filter((a) => a.categorie === cat)
+                    .map((a) => (
+                      <option key={a.code} value={a.code}>
+                        {a.libelle}
+                      </option>
+                    ))}
                 </optgroup>
               ))}
             </Select>
@@ -134,9 +140,9 @@ function EditeurVariante({
               type="number"
               min={0}
               step="0.01"
-              value={l.baseRemboursement}
+              value={l.tarifReference}
               aria-label="Base de remboursement"
-              onChange={(e) => majLigne(l.id, { baseRemboursement: Number(e.target.value) })}
+              onChange={(e) => majLigne(l.id, { tarifReference: Number(e.target.value) })}
             />
             <Button
               variante="fantome"
@@ -153,7 +159,7 @@ function EditeurVariante({
         <Button
           taille="sm"
           variante="secondaire"
-          onClick={() => onChange({ ...variante, lignes: [...variante.lignes, ligneVide()] })}
+          onClick={() => onChange({ ...variante, lignes: [...variante.lignes, ligneVide(nomenclature)] })}
         >
           + Ligne
         </Button>
@@ -177,13 +183,15 @@ const COLONNES: Record<number, string> = {
 function Comparateur({
   devis,
   devise,
+  taux,
   onChoisir,
 }: {
   devis: Devis;
   devise: string;
+  taux: number;
   onChoisir?: (varianteId: string) => void;
 }) {
-  const totaux = devis.variantes.map((v) => totauxVariante(v));
+  const totaux = devis.variantes.map((v) => totauxVariante(v, taux));
   const moinsCher = Math.min(...totaux.map((t) => t.resteACharge));
 
   return (
@@ -229,8 +237,8 @@ function Comparateur({
                 <dd className="font-semibold text-slate-800">{formatMontant(t.total, devise)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-500">Base de remboursement</dt>
-                <dd className="text-slate-600">{formatMontant(t.baseRemboursement, devise)}</dd>
+                <dt className="text-slate-500">Pris en charge</dt>
+                <dd className="text-slate-600">{formatMontant(t.remboursement, devise)}</dd>
               </div>
               <div className="flex justify-between text-base">
                 <dt className="font-semibold text-slate-700">Reste à charge</dt>
@@ -258,6 +266,8 @@ export function OngletDevis({ patient }: { patient: Patient }) {
   const { data, praticienActif, ajouterDevis, majDevis, supprimerDevis, deciderDevis, basculerDevisEnPlan } =
     useApp();
   const devise = data.cabinet.devise;
+  const nomenclature = data.cabinet.nomenclature;
+  const taux = tauxRegime(nomenclature, patient.regime);
   const [edition, setEdition] = useState<Omit<Devis, 'id' | 'creeLe' | 'numero'> | null>(null);
   const [message, setMessage] = useState('');
 
@@ -271,7 +281,7 @@ export function OngletDevis({ patient }: { patient: Patient }) {
       patientId: patient.id,
       date: aujourdHui(),
       praticien: praticienActif,
-      variantes: [varianteVide('Option recommandée'), varianteVide('Alternative')],
+      variantes: [varianteVide('Option recommandée', nomenclature), varianteVide('Alternative', nomenclature)],
       varianteAcceptee: null,
       dateDecision: null,
       statut: 'presente',
@@ -345,6 +355,7 @@ export function OngletDevis({ patient }: { patient: Patient }) {
                     <Comparateur
                       devis={d}
                       devise={devise}
+                      taux={taux}
                       onChoisir={(varianteId) =>
                         deciderDevis(d.id, d.varianteAcceptee === varianteId ? null : varianteId)
                       }
@@ -435,6 +446,8 @@ export function OngletDevis({ patient }: { patient: Patient }) {
                   key={v.id}
                   variante={v}
                   devise={devise}
+                  nomenclature={nomenclature}
+                  taux={taux}
                   onChange={(maj) =>
                     setEdition({
                       ...edition,
@@ -453,7 +466,10 @@ export function OngletDevis({ patient }: { patient: Patient }) {
               onClick={() =>
                 setEdition({
                   ...edition,
-                  variantes: [...edition.variantes, varianteVide(`Option ${edition.variantes.length + 1}`)],
+                  variantes: [
+                    ...edition.variantes,
+                    varianteVide(`Option ${edition.variantes.length + 1}`, nomenclature),
+                  ],
                 })
               }
             >

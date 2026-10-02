@@ -7,9 +7,10 @@ import {
   type EnveloppeChiffree,
 } from '@/lib/crypto';
 import { facteursRisqueVides } from '@/data/seed';
+import { NOMENCLATURE_PAR_DEFAUT, nomenclature } from '@/data/nomenclatures';
 
 export const CLE_STOCKAGE = 'suivi-patient-dentaire:v1';
-export const VERSION_DONNEES = 2;
+export const VERSION_DONNEES = 3;
 
 export type Enveloppe =
   | { etat: 'vide' }
@@ -80,9 +81,21 @@ export function effacer(): void {
   }
 }
 
-function migrerPatient(p: Patient): Patient {
+/** Ancien nom du tarif de référence, avant la gestion multi-nomenclature. */
+type AvecAncienneBase = { baseRemboursement?: number };
+
+function migrerTarifReference<T extends { tarifReference?: number }>(ligne: T): T {
+  const ancien = (ligne as T & AvecAncienneBase).baseRemboursement;
+  if (ligne.tarifReference === undefined && typeof ancien === 'number') {
+    return { ...ligne, tarifReference: ancien };
+  }
+  return ligne;
+}
+
+function migrerPatient(p: Patient, regimeParDefaut: string): Patient {
   return {
     ...p,
+    regime: p.regime ?? regimeParDefaut,
     facteursRisque: { ...facteursRisqueVides(), ...(p.facteursRisque ?? {}) },
     rappelMois: typeof p.rappelMois === 'number' ? p.rappelMois : 6,
     dernierControle: p.dernierControle ?? null,
@@ -95,19 +108,29 @@ function migrerPatient(p: Patient): Patient {
 
 /** Fills in fields added after the stored payload was written. */
 export function migrer(data: AppData): AppData {
+  // Les sauvegardes antérieures à la gestion multi-nomenclature n'ont ni
+  // nomenclature ni régime : on les rattache à la CCAM française, qui était
+  // alors la seule possible.
+  const idNomenclature = data.cabinet?.nomenclature ?? NOMENCLATURE_PAR_DEFAUT;
+  const regimeParDefaut = data.cabinet?.regimeParDefaut ?? nomenclature(idNomenclature).regimes[0].id;
+
   return {
     ...data,
     version: VERSION_DONNEES,
-    patients: (data.patients ?? []).map(migrerPatient),
+    cabinet: { ...data.cabinet, nomenclature: idNomenclature, regimeParDefaut },
+    patients: (data.patients ?? []).map((p) => migrerPatient(p, regimeParDefaut)),
     odontogrammes: data.odontogrammes ?? [],
-    actes: data.actes ?? [],
+    actes: (data.actes ?? []).map(migrerTarifReference),
     rendezVous: data.rendezVous ?? [],
     factures: data.factures ?? [],
     notes: data.notes ?? [],
     journal: data.journal ?? [],
     chartingsParo: data.chartingsParo ?? [],
     images: data.images ?? [],
-    devis: data.devis ?? [],
+    devis: (data.devis ?? []).map((d) => ({
+      ...d,
+      variantes: (d.variantes ?? []).map((v) => ({ ...v, lignes: (v.lignes ?? []).map(migrerTarifReference) })),
+    })),
     ordonnances: data.ordonnances ?? [],
   };
 }

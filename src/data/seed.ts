@@ -15,7 +15,7 @@ import type {
   Patient,
   RendezVous,
 } from '@/types';
-import { CATALOGUE_ACTES, trouverActe } from '@/data/actes';
+import { NOMENCLATURE_PAR_DEFAUT, actesDe, trouverActeDans } from '@/data/nomenclatures';
 import { SITES_PERIO, estPluriradiculee } from '@/data/perio';
 import { ARCADE_INF_PERM, ARCADE_SUP_PERM, position } from '@/data/teeth';
 import { maintenant, uid, arrondi2 } from '@/lib/utils';
@@ -58,6 +58,8 @@ export function cabinetParDefaut(): AppData['cabinet'] {
     devise: 'EUR',
     tauxTva: 0,
     dureeRdvDefaut: 30,
+    nomenclature: NOMENCLATURE_PAR_DEFAUT,
+    regimeParDefaut: 'am',
     verrouillageMinutes: 15,
     praticiens: [
       { id: 'prat_1', nom: 'Dr Claire Fontaine', specialite: 'Omnipratique', couleur: '#1d66f0' },
@@ -203,7 +205,7 @@ function acte(
   seance = 1,
   faces: Acte['faces'] = [],
 ): Acte {
-  const modele = trouverActe(code) ?? CATALOGUE_ACTES[0];
+  const modele = trouverActeDans(NOMENCLATURE_PAR_DEFAUT, code) ?? actesDe(NOMENCLATURE_PAR_DEFAUT)[0];
   return {
     id: uid('acte'),
     patientId,
@@ -213,7 +215,7 @@ function acte(
     libelle: modele.libelle,
     statut,
     tarif: modele.tarif,
-    baseRemboursement: modele.baseRemboursement,
+    tarifReference: modele.tarifReference,
     seance,
     praticien,
     datePrevue: jourISO(decalageJours),
@@ -247,6 +249,7 @@ export function donneesDemo(): AppData {
       adresse: g.adresse,
       numeroSecu: `${g.sexe === 'F' ? 2 : 1}${g.dateNaissance.slice(2, 4)}${g.dateNaissance.slice(5, 7)}75${String(100 + i).padStart(3, '0')}`,
       mutuelle: g.mutuelle,
+      regime: 'am',
       medecinTraitant: 'Dr Renaud Lefèvre',
       allergies: g.allergies,
       antecedents: g.antecedents,
@@ -448,7 +451,7 @@ function devisDemo(praticien: string): Devis[] {
     dents,
     quantite: 1,
     tarif,
-    baseRemboursement: base,
+    tarifReference: base,
   });
 
   return [

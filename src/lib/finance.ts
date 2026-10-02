@@ -25,13 +25,18 @@ export function statutCalcule(f: Facture): Facture['statut'] {
 
 export interface ResumeDevis {
   total: number;
-  baseRemboursement: number;
+  /** Montant effectivement pris en charge par le régime du patient. */
+  remboursement: number;
   resteACharge: number;
   parStatut: Record<Acte['statut'], number>;
 }
 
-/** Aggregates a treatment plan: total fees, reimbursable base and out-of-pocket. */
-export function resumerActes(actes: Acte[]): ResumeDevis {
+/**
+ * Synthèse d'un plan de traitement. Le remboursement est le tarif de
+ * référence de chaque acte multiplié par le taux du régime du patient : c'est
+ * la même formule en France (base de remboursement) et au Maroc (TNR).
+ */
+export function resumerActes(actes: Acte[], taux = 0): ResumeDevis {
   const parStatut: ResumeDevis['parStatut'] = { planifie: 0, en_cours: 0, realise: 0, annule: 0 };
   let total = 0;
   let base = 0;
@@ -39,11 +44,11 @@ export function resumerActes(actes: Acte[]): ResumeDevis {
     parStatut[a.statut] += 1;
     if (a.statut === 'annule') continue;
     total += a.tarif;
-    base += a.baseRemboursement;
+    base += a.tarifReference * taux;
   }
   return {
     total: arrondi2(total),
-    baseRemboursement: arrondi2(base),
+    remboursement: arrondi2(base),
     resteACharge: arrondi2(Math.max(0, total - base)),
     parStatut,
   };
@@ -74,17 +79,17 @@ export function prochainNumeroDevis(devis: Devis[], date = new Date()): string {
 
 export interface TotauxVariante {
   total: number;
-  baseRemboursement: number;
+  remboursement: number;
   resteACharge: number;
 }
 
-export function totauxVariante(v: VarianteDevis): TotauxVariante {
+export function totauxVariante(v: VarianteDevis, taux = 0): TotauxVariante {
   const total = v.lignes.reduce((s, l) => s + l.quantite * l.tarif, 0);
-  const base = v.lignes.reduce((s, l) => s + l.quantite * l.baseRemboursement, 0);
+  const rembourse = v.lignes.reduce((s, l) => s + l.quantite * l.tarifReference * taux, 0);
   return {
     total: arrondi2(total),
-    baseRemboursement: arrondi2(base),
-    resteACharge: arrondi2(Math.max(0, total - base)),
+    remboursement: arrondi2(rembourse),
+    resteACharge: arrondi2(Math.max(0, total - rembourse)),
   };
 }
 

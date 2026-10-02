@@ -7,10 +7,11 @@ import { Field, Input, Select } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { exporterJSON, importerJSON, telecharger } from '@/lib/storage';
 import { SectionSecurite } from '@/components/SectionSecurite';
+import { NOMENCLATURES, nomenclature, regimeConnu, regimesDe } from '@/data/nomenclatures';
 import { uid } from '@/lib/utils';
 
 export function Parametres() {
-  const { data, majCabinet, remplacerDonnees, chargerDemo, toutEffacer } = useApp();
+  const { data, majCabinet, majPatient, remplacerDonnees, chargerDemo, toutEffacer } = useApp();
   const fichierRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ type: 'ok' | 'erreur'; texte: string } | null>(null);
   const [confirmation, setConfirmation] = useState<'effacer' | 'demo' | null>(null);
@@ -144,6 +145,98 @@ export function Parametres() {
           ))}
           {data.cabinet.praticiens.length === 0 ? (
             <p className="text-sm text-slate-400">Ajoutez au moins un praticien pour planifier des rendez-vous.</p>
+          ) : null}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          titre="Nomenclature et couverture"
+          sousTitre="Catalogue d’actes et taux de prise en charge appliqués au cabinet"
+        />
+        <CardBody className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nomenclature" aide="Change le catalogue d’actes et les régimes proposés.">
+              <Select
+                value={data.cabinet.nomenclature}
+                onChange={(e) => {
+                  const choisie = nomenclature(e.target.value);
+                  majCabinet({
+                    nomenclature: choisie.id,
+                    regimeParDefaut: choisie.regimes[0].id,
+                    devise: choisie.deviseConseillee,
+                  });
+                }}
+              >
+                {NOMENCLATURES.map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.nom}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Régime par défaut" aide="Proposé aux nouveaux dossiers patients.">
+              <Select
+                value={data.cabinet.regimeParDefaut}
+                onChange={(e) => majCabinet({ regimeParDefaut: e.target.value })}
+              >
+                {regimesDe(data.cabinet.nomenclature).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nom} — {Math.round(r.taux * 100)} %
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <div className="rounded-lg bg-slate-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Régimes disponibles</p>
+            <ul className="mt-1.5 space-y-0.5 text-sm text-slate-700">
+              {regimesDe(data.cabinet.nomenclature).map((r) => (
+                <li key={r.id}>
+                  {r.nom} : {Math.round(r.taux * 100)} % du tarif de référence
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              {nomenclature(data.cabinet.nomenclature).actes.length} actes au catalogue. Les honoraires et les
+              tarifs de référence restent modifiables acte par acte.
+            </p>
+          </div>
+
+          {(() => {
+            const orphelins = data.patients.filter(
+              (p) => !regimeConnu(data.cabinet.nomenclature, p.regime),
+            );
+            if (orphelins.length === 0) return null;
+            return (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                <strong>
+                  {orphelins.length} dossier(s) sans régime valide dans cette nomenclature.
+                </strong>{' '}
+                Leur reste à charge sera calculé sans prise en charge tant qu’un régime n’est pas choisi.{' '}
+                <button
+                  type="button"
+                  className="font-semibold underline"
+                  onClick={() => {
+                    orphelins.forEach((p) => majPatient(p.id, { regime: data.cabinet.regimeParDefaut }));
+                    setMessage({
+                      type: 'ok',
+                      texte: `${orphelins.length} dossier(s) rattaché(s) au régime par défaut.`,
+                    });
+                  }}
+                >
+                  Tous les rattacher au régime par défaut
+                </button>
+              </div>
+            );
+          })()}
+
+          {!nomenclature(data.cabinet.nomenclature).verifiee ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <strong>Catalogue à confirmer.</strong>{' '}
+              {nomenclature(data.cabinet.nomenclature).note}
+            </p>
           ) : null}
         </CardBody>
       </Card>

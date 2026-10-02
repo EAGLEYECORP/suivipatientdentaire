@@ -56,6 +56,8 @@ export interface Patient {
   adresse: string;
   numeroSecu: string;
   mutuelle: string;
+  /** Régime de couverture du patient, dans la nomenclature active. */
+  regime: string;
   medecinTraitant: string;
   allergies: string[];
   antecedents: string[];
@@ -94,8 +96,8 @@ export interface Acte {
   libelle: string;
   statut: StatutActe;
   tarif: number;
-  /** Part covered by the mandatory scheme, in currency units. */
-  baseRemboursement: number;
+  /** Tarif de référence servant de base au remboursement (BR en France, TNR au Maroc). */
+  tarifReference: number;
   seance: number;
   praticien: string;
   datePrevue: string; // ISO yyyy-mm-dd
@@ -175,6 +177,10 @@ export interface Cabinet {
   devise: string;
   tauxTva: number;
   dureeRdvDefaut: number;
+  /** Nomenclature d'actes active (voir data/nomenclatures.ts). */
+  nomenclature: string;
+  /** Régime de couverture proposé par défaut aux nouveaux patients. */
+  regimeParDefaut: string;
   /** Verrouillage automatique du coffre après N minutes d'inactivité (0 = jamais). */
   verrouillageMinutes: number;
   praticiens: Praticien[];
@@ -338,7 +344,7 @@ export interface LigneDevis {
   dents: number[];
   quantite: number;
   tarif: number;
-  baseRemboursement: number;
+  tarifReference: number;
 }
 
 export interface VarianteDevis {

@@ -4,6 +4,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, ListeTexte, Select, Textarea } from '@/components/ui/Field';
 import { facteursRisqueVides } from '@/data/seed';
+import { regimesDe } from '@/data/nomenclatures';
+import { useApp } from '@/store/AppContext';
 
 export type BrouillonPatient = Omit<Patient, 'id' | 'creeLe' | 'majLe'>;
 
@@ -18,6 +20,7 @@ export function patientVide(): BrouillonPatient {
     adresse: '',
     numeroSecu: '',
     mutuelle: '',
+    regime: '',
     medecinTraitant: '',
     allergies: [],
     antecedents: [],
@@ -39,6 +42,8 @@ interface Props {
 }
 
 export function PatientForm({ ouvert, patient, onFermer, onEnregistrer }: Props) {
+  const { data } = useApp();
+  const regimes = regimesDe(data.cabinet.nomenclature);
   const [brouillon, setBrouillon] = useState<BrouillonPatient>(patientVide());
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
 
@@ -138,6 +143,16 @@ export function PatientForm({ ouvert, patient, onFermer, onEnregistrer }: Props)
         </Field>
         <Field label="Mutuelle">
           <Input value={brouillon.mutuelle} onChange={(e) => set('mutuelle', e.target.value)} />
+        </Field>
+        <Field label="Régime de couverture" aide="Détermine le taux de prise en charge des actes.">
+          <Select value={brouillon.regime} onChange={(e) => set('regime', e.target.value)}>
+            <option value="">Non renseigné</option>
+            {regimes.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.nom} — {Math.round(r.taux * 100)} %
+              </option>
+            ))}
+          </Select>
         </Field>
         <Field label="Médecin traitant" className="sm:col-span-2">
           <Input

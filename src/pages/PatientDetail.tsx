@@ -32,6 +32,7 @@ import { RdvForm } from '@/components/RdvForm';
 import type { BrouillonRdv } from '@/components/RdvForm';
 import { STATUT_RDV_META } from '@/data/rendezVous';
 import { ETATS, toutesLesDents } from '@/data/teeth';
+import { tauxRegime } from '@/data/nomenclatures';
 import { resumerActes, resteAPayer, totalFacture, totalPaye } from '@/lib/finance';
 import {
   age,
@@ -139,7 +140,8 @@ export function PatientDetail() {
     [data.factures, id],
   );
 
-  const resume = useMemo(() => resumerActes(actesPatient), [actesPatient]);
+  const tauxPatient = tauxRegime(data.cabinet.nomenclature, patient?.regime);
+  const resume = useMemo(() => resumerActes(actesPatient, tauxPatient), [actesPatient, tauxPatient]);
 
   const datesCles = useMemo(() => datesClesSchema(data.journal, id), [data.journal, id]);
 
@@ -669,7 +671,7 @@ export function PatientDetail() {
                           {formatMontant(a.tarif, data.cabinet.devise)}
                         </span>
                         <span className="block text-xs text-slate-400">
-                          reste {formatMontant(Math.max(0, a.tarif - a.baseRemboursement), data.cabinet.devise)}
+                          reste {formatMontant(Math.max(0, a.tarif - a.tarifReference), data.cabinet.devise)}
                         </span>
                       </td>
                       <td className="px-3 py-3">
@@ -714,7 +716,7 @@ export function PatientDetail() {
                     <td className="px-3 py-3" colSpan={3}>
                       {formatMontant(resume.total, data.cabinet.devise)}
                       <span className="ml-2 font-normal text-slate-500">
-                        dont {formatMontant(resume.baseRemboursement, data.cabinet.devise)} remboursables
+                        dont {formatMontant(resume.remboursement, data.cabinet.devise)} pris en charge
                       </span>
                     </td>
                   </tr>

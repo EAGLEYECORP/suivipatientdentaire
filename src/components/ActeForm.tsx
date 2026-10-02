@@ -4,9 +4,9 @@ import { useApp } from '@/store/AppContext';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
-import { CATALOGUE_ACTES, CATEGORIES_ACTES, trouverActe } from '@/data/actes';
+import { actesDe, categoriesDe, regimeConnu, tauxRegime, trouverActeDans } from '@/data/nomenclatures';
 import { LIBELLE_FACE, facesDisponibles, toutesLesDents } from '@/data/teeth';
-import { aujourdHui, cx } from '@/lib/utils';
+import { aujourdHui, cx, formatMontant } from '@/lib/utils';
 
 export type BrouillonActe = Omit<Acte, 'id' | 'creeLe'>;
 
@@ -30,6 +30,9 @@ export function ActeForm({
   onSupprimer,
 }: Props) {
   const { data, odontogramme } = useApp();
+  const nomenclature = data.cabinet.nomenclature;
+  const catalogue = actesDe(nomenclature);
+  const categories = categoriesDe(nomenclature);
   const [brouillon, setBrouillon] = useState<BrouillonActe | null>(null);
   const [erreur, setErreur] = useState('');
 
@@ -46,7 +49,7 @@ export function ActeForm({
       setBrouillon(reste);
       return;
     }
-    const modele = CATALOGUE_ACTES[0];
+    const modele = catalogue[0];
     setBrouillon({
       patientId: patientId ?? patientsTries[0]?.id ?? '',
       dents: dentsPreselectionnees,
@@ -55,7 +58,7 @@ export function ActeForm({
       libelle: modele.libelle,
       statut: 'planifie',
       tarif: modele.tarif,
-      baseRemboursement: modele.baseRemboursement,
+      tarifReference: modele.tarifReference,
       seance: 1,
       praticien: data.cabinet.praticiens[0]?.nom ?? '',
       datePrevue: aujourdHui(),
@@ -84,7 +87,7 @@ export function ActeForm({
     : (['M', 'D', 'V', 'L', 'O'] as Face[]);
 
   const choisirModele = (code: string) => {
-    const m = trouverActe(code);
+    const m = trouverActeDans(nomenclature, code);
     if (!m) return;
     setBrouillon((b) =>
       b
@@ -93,7 +96,7 @@ export function ActeForm({
             codeActe: m.code,
             libelle: m.libelle,
             tarif: m.tarif,
-            baseRemboursement: m.baseRemboursement,
+            tarifReference: m.tarifReference,
             dents: m.cible === 'general' ? [] : b.dents,
           }
         : b,
@@ -115,7 +118,7 @@ export function ActeForm({
       setErreur('Le libellé de l’acte est obligatoire.');
       return;
     }
-    if (brouillon.tarif < 0 || brouillon.baseRemboursement < 0) {
+    if (brouillon.tarif < 0 || brouillon.tarifReference < 0) {
       setErreur('Les montants ne peuvent pas être négatifs.');
       return;
     }
@@ -160,11 +163,11 @@ export function ActeForm({
           </Field>
         ) : null}
 
-        <Field label="Acte du catalogue (CCAM)" className="sm:col-span-2">
+        <Field label={`Acte du catalogue (${data.cabinet.nomenclature === 'ngap-ma' ? 'NGAP' : 'CCAM'})`} className="sm:col-span-2">
           <Select value={brouillon.codeActe} onChange={(e) => choisirModele(e.target.value)}>
-            {CATEGORIES_ACTES.map((cat) => (
+            {categories.map((cat) => (
               <optgroup key={cat} label={cat}>
-                {CATALOGUE_ACTES.filter((a) => a.categorie === cat).map((a) => (
+                {catalogue.filter((a) => a.categorie === cat).map((a) => (
                   <option key={a.code} value={a.code}>
                     {a.code} — {a.libelle}
                   </option>
@@ -254,13 +257,13 @@ export function ActeForm({
             onChange={(e) => set('tarif', Number(e.target.value))}
           />
         </Field>
-        <Field label="Base de remboursement (€)" aide="Part prise en charge par l’Assurance maladie.">
+        <Field label="Tarif de référence" aide="Base servant au calcul du remboursement.">
           <Input
             type="number"
             step="0.01"
             min={0}
-            value={brouillon.baseRemboursement}
-            onChange={(e) => set('baseRemboursement', Number(e.target.value))}
+            value={brouillon.tarifReference}
+            onChange={(e) => set('tarifReference', Number(e.target.value))}
           />
         </Field>
         <Field label="Praticien">
@@ -293,10 +296,26 @@ export function ActeForm({
         </Field>
       </div>
 
-      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-        Reste à charge estimé :{' '}
-        <strong>{Math.max(0, brouillon.tarif - brouillon.baseRemboursement).toFixed(2)} €</strong>
-      </p>
+      {(() => {
+        const patientActe = data.patients.find((x) => x.id === brouillon.patientId);
+        const taux = tauxRegime(nomenclature, patientActe?.regime);
+        const rembourse = brouillon.tarifReference * taux;
+        if (!regimeConnu(nomenclature, patientActe?.regime)) {
+          return (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Aucun régime de couverture valide sur ce dossier : le reste à charge affiché vaut la totalité des
+              honoraires. Renseignez le régime du patient pour calculer la prise en charge.
+            </p>
+          );
+        }
+        return (
+          <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Remboursement estimé <strong>{formatMontant(rembourse, data.cabinet.devise)}</strong> ({Math.round(taux * 100)} %
+            du tarif de référence) · reste à charge{' '}
+            <strong>{formatMontant(Math.max(0, brouillon.tarif - rembourse), data.cabinet.devise)}</strong>
+          </p>
+        );
+      })()}
       {erreur ? (
         <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{erreur}</p>
       ) : null}

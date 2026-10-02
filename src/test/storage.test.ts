@@ -125,7 +125,7 @@ describe('coffre et magasin', () => {
       ],
     };
     const migre = importerJSON(JSON.stringify(ancien));
-    expect(migre.version).toBe(2);
+    expect(migre.version).toBe(3);
     expect(migre.patients[0].allergies).toEqual(['Pénicilline']);
     // Les champs nouveaux reçoivent des valeurs sûres.
     expect(migre.patients[0].facteursRisque.tabac).toBe('non');

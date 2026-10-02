@@ -1,7 +1,7 @@
 import type { AppData, Patient } from '@/types';
 import { resteAPayer, totalFacture, totalPaye } from '@/lib/finance';
 import { arrondi2 } from '@/lib/utils';
-import { trouverActe } from '@/data/actes';
+import { trouverActeDans } from '@/data/nomenclatures';
 
 /**
  * Indicateurs de pilotage du cabinet. Toutes les fonctions sont pures et
@@ -171,7 +171,7 @@ export function repartitionActes(data: AppData): LigneCategorie[] {
   const parCategorie = new Map<string, LigneCategorie>();
   for (const a of data.actes) {
     if (a.statut !== 'realise') continue;
-    const categorie = trouverActe(a.codeActe)?.categorie ?? 'Autre';
+    const categorie = trouverActeDans(data.cabinet.nomenclature, a.codeActe)?.categorie ?? 'Autre';
     const ligne = parCategorie.get(categorie) ?? { categorie, nombre: 0, montant: 0 };
     ligne.nombre += 1;
     ligne.montant = arrondi2(ligne.montant + a.tarif);

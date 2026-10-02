@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input, Select } from '@/components/ui/Field';
 import { ActeForm } from '@/components/ActeForm';
 import type { BrouillonActe } from '@/components/ActeForm';
-import { CATEGORIES_ACTES, trouverActe } from '@/data/actes';
+import { categoriesDe, trouverActeDans } from '@/data/nomenclatures';
 import { correspond, formatDate, formatMontant } from '@/lib/utils';
 import { resumerActes } from '@/lib/finance';
 
@@ -35,13 +35,14 @@ export function Traitements() {
       .filter((a) => {
         if (statut !== 'tous' && a.statut !== statut) return false;
         if (praticien !== 'tous' && a.praticien !== praticien) return false;
-        if (categorie !== 'toutes' && trouverActe(a.codeActe)?.categorie !== categorie) return false;
+        if (categorie !== 'toutes' && trouverActeDans(data.cabinet.nomenclature, a.codeActe)?.categorie !== categorie)
+          return false;
         const p = patientsParId.get(a.patientId);
         const cible = `${a.libelle} ${a.codeActe} ${p ? `${p.prenom} ${p.nom}` : ''} ${a.dents.join(' ')}`;
         return correspond(cible, requete);
       })
       .sort((a, b) => (b.dateRealisation ?? b.datePrevue).localeCompare(a.dateRealisation ?? a.datePrevue));
-  }, [data.actes, statut, praticien, categorie, requete, patientsParId]);
+  }, [data.actes, data.cabinet.nomenclature, statut, praticien, categorie, requete, patientsParId]);
 
   const resume = useMemo(() => resumerActes(liste), [liste]);
 
@@ -85,7 +86,7 @@ export function Traitements() {
           </Select>
           <Select value={categorie} onChange={(e) => setCategorie(e.target.value)} className="max-w-[12rem]" aria-label="Catégorie">
             <option value="toutes">Toutes les catégories</option>
-            {CATEGORIES_ACTES.map((c) => (
+            {categoriesDe(data.cabinet.nomenclature).map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

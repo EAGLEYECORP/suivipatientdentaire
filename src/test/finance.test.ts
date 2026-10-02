@@ -37,7 +37,7 @@ function acte(partiel: Partial<Acte> = {}): Acte {
     libelle: 'Obturation 1 face',
     statut: 'planifie',
     tarif: 100,
-    baseRemboursement: 30,
+    tarifReference: 30,
     seance: 1,
     praticien: 'Dr Test',
     datePrevue: '2026-02-01',
@@ -93,11 +93,29 @@ describe('numérotation des factures', () => {
 
 describe('synthèse du plan de traitement', () => {
   it('ignore les actes annulés dans les totaux', () => {
-    const r = resumerActes([acte(), acte({ id: 'a2', statut: 'annule', tarif: 999, baseRemboursement: 0 })]);
+    const r = resumerActes([acte(), acte({ id: 'a2', statut: 'annule', tarif: 999, tarifReference: 0 })], 1);
     expect(r.total).toBe(100);
-    expect(r.baseRemboursement).toBe(30);
+    expect(r.remboursement).toBe(30);
     expect(r.resteACharge).toBe(70);
     expect(r.parStatut.annule).toBe(1);
     expect(r.parStatut.planifie).toBe(1);
+  });
+
+  it('applique le taux du régime au tarif de référence', () => {
+    // Acte à 100, tarif de référence 30 : CNSS rembourse 70 % de 30 = 21.
+    const cnss = resumerActes([acte()], 0.7);
+    expect(cnss.remboursement).toBe(21);
+    expect(cnss.resteACharge).toBe(79);
+
+    // CNOPS rembourse 80 % de 30 = 24.
+    const cnops = resumerActes([acte()], 0.8);
+    expect(cnops.remboursement).toBe(24);
+    expect(cnops.resteACharge).toBe(76);
+  });
+
+  it('ne rembourse rien sans régime', () => {
+    const r = resumerActes([acte()]);
+    expect(r.remboursement).toBe(0);
+    expect(r.resteACharge).toBe(100);
   });
 });

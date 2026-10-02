@@ -105,9 +105,26 @@ Le tableau de bord agrège la vigilance sur l'ensemble du cabinet.
 - Décision tracée (acceptation, refus, prolongation, expiration), et l'option retenue **se transforme
   en actes du plan de traitement** en un clic.
 
+### Nomenclature et couverture
+
+Le catalogue d'actes n'est pas câblé sur un seul pays. Le cabinet choisit sa
+nomenclature dans les paramètres, ce qui change d'un coup le catalogue, les
+régimes proposés et la devise conseillée :
+
+| Nomenclature       | Actes | Régimes                                            |
+| ------------------ | ----- | -------------------------------------------------- |
+| France — CCAM      | 23    | Assurance maladie 70 %, CSS 100 %, sans couverture |
+| Maroc — NGAP / TNR | 14    | CNSS 70 %, CNOPS 80 %, sans couverture             |
+
+Le remboursement se calcule partout de la même façon : **tarif de référence ×
+taux du régime du patient**. C'est la base de remboursement en France, la
+Tarification nationale de référence au Maroc. Chaque patient porte son régime,
+et un dossier dont le régime n'existe pas dans la nomenclature active est
+signalé plutôt que calculé en silence à zéro.
+
 ### Plans de traitement, agenda, facturation
 
-- Catalogue de 23 actes inspirés de la **CCAM** : codes, honoraires, base de remboursement, durée.
+- Catalogue d'actes codés, avec honoraires, tarif de référence et durée.
 - Actes rattachés aux dents et aux faces, organisés par séance ; totaux et reste à charge.
 - Agenda en grille horaire et en liste, création par clic sur un créneau, **détection des conflits**
   par praticien, filtrage, couleurs de praticien.
@@ -170,7 +187,7 @@ chaque écran soit immédiatement utilisable. Remplaçable ou effaçable depuis 
 ```bash
 npm run build      # build de production + précache du service worker
 npm run preview    # sert le build de production
-npm run test       # 155 tests (Vitest)
+npm run test       # 168 tests (Vitest)
 npm run lint       # vérification TypeScript
 ```
 
@@ -229,7 +246,7 @@ par le magasin `src/store/AppContext.tsx`.
 
 ## Tests
 
-155 tests couvrent :
+168 tests couvrent :
 
 - la numérotation FDI, l'anatomie et la **géométrie de l'arcade** (symétrie, non-chevauchement,
   courbure, boîte englobante) ;
@@ -242,7 +259,8 @@ par le magasin `src/store/AppContext.tsx`.
   illisibles sans clé ;
 - la **facturation et le pilotage** — totaux, statuts, numérotation annuelle, ventilation mensuelle,
   taux, rappels ;
-- la persistance, les migrations v1 → v2, et des **parcours applicatifs de bout en bout**.
+- les **nomenclatures** — intégrité des catalogues, taux CNSS et CNOPS, régime inconnu ;
+- la persistance, les migrations v1 → v3, et des **parcours applicatifs de bout en bout**.
 
 ```bash
 npm run test
@@ -282,3 +300,10 @@ indispensable, sinon les deux se désactivent silencieusement.
   lecture, pas un confort.
 - **Monoposte** : pas de synchronisation entre postes ni de comptes utilisateurs. Le praticien actif
   signe le journal mais n'est pas authentifié.
+- **Catalogues à confirmer** : aucune des deux nomenclatures n'a été confrontée à sa source officielle.
+  Le jeu marocain est partiel (14 actes) et ses valeurs proviennent de sources secondaires, les
+  documents de l'ANAM et de la CNOPS n'étant pas accessibles. La Tarification nationale de référence
+  date de 2006 et n'a pas été revalorisée depuis. À vérifier avant tout usage de facturation ;
+  l'application le signale dans les paramètres.
+- **Pas de télétransmission** : ni feuille de soins électronique en France, ni formulaire de
+  remboursement AMO au Maroc.
