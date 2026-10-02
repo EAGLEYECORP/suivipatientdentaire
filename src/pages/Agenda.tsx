@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { RendezVous, StatutRdv } from '@/types';
 import type { TonBadge } from '@/components/ui/Badge';
 import { useApp } from '@/store/AppContext';
@@ -31,7 +31,8 @@ export function Agenda() {
   const [ancre, setAncre] = useState(() => debutSemaine(new Date()));
   const [praticienFiltre, setPraticienFiltre] = useState('tous');
   const [vue, setVue] = useState<'semaine' | 'liste'>('semaine');
-  const [formOuvert, setFormOuvert] = useState(false);
+  const [parametres, setParametres] = useSearchParams();
+  const [formOuvert, setFormOuvert] = useState(parametres.get('nouveau') === '1');
   const [rdvEdite, setRdvEdite] = useState<RendezVous | undefined>();
   const [creneauPropose, setCreneauPropose] = useState<string | undefined>();
 
@@ -315,7 +316,13 @@ export function Agenda() {
         ouvert={formOuvert}
         rdv={rdvEdite}
         debutPropose={creneauPropose}
-        onFermer={() => setFormOuvert(false)}
+        onFermer={() => {
+          setFormOuvert(false);
+          if (parametres.has('nouveau')) {
+            parametres.delete('nouveau');
+            setParametres(parametres, { replace: true });
+          }
+        }}
         onEnregistrer={enregistrer}
         onSupprimer={
           rdvEdite

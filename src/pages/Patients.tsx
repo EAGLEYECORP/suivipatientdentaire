@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +19,8 @@ export function Patients() {
   const [requete, setRequete] = useState('');
   const [filtre, setFiltre] = useState<'tous' | 'actifs' | 'inactifs' | 'alertes'>('tous');
   const [tri, setTri] = useState<Tri>('nom');
-  const [formOuvert, setFormOuvert] = useState(false);
+  const [parametres, setParametres] = useSearchParams();
+  const [formOuvert, setFormOuvert] = useState(parametres.get('nouveau') === '1');
   const [aSupprimer, setASupprimer] = useState<string | null>(null);
 
   const liste = useMemo(() => {
@@ -49,6 +50,14 @@ export function Patients() {
   };
 
   const patientSupprime = data.patients.find((p) => p.id === aSupprimer);
+
+  const fermerForm = () => {
+    setFormOuvert(false);
+    if (parametres.has('nouveau')) {
+      parametres.delete('nouveau');
+      setParametres(parametres, { replace: true });
+    }
+  };
 
   const creer = (b: BrouillonPatient) => {
     const p = ajouterPatient(b);
@@ -185,7 +194,7 @@ export function Patients() {
         )}
       </Card>
 
-      <PatientForm ouvert={formOuvert} onFermer={() => setFormOuvert(false)} onEnregistrer={creer} />
+      <PatientForm ouvert={formOuvert} onFermer={fermerForm} onEnregistrer={creer} />
 
       <ConfirmDialog
         ouvert={aSupprimer !== null}

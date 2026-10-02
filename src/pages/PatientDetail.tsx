@@ -16,6 +16,7 @@ import { PatientForm } from '@/components/PatientForm';
 import { OngletParodontie } from '@/components/perio/OngletParodontie';
 import { OngletImagerie } from '@/components/OngletImagerie';
 import { OngletDevis } from '@/components/OngletDevis';
+import { OngletOrdonnances } from '@/components/OngletOrdonnances';
 import { PanneauAlertes } from '@/components/PanneauAlertes';
 import { PanneauRisques } from '@/components/PanneauRisques';
 import { biographieDent, datesClesSchema, odontogrammeADate } from '@/lib/historique';
@@ -43,7 +44,7 @@ import {
   maintenant,
 } from '@/lib/utils';
 
-type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'devis' | 'agenda' | 'notes' | 'facturation' | 'dossier';
+type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'devis' | 'ordonnances' | 'agenda' | 'notes' | 'facturation' | 'dossier';
 
 const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'schema', label: 'Schéma dentaire' },
@@ -51,6 +52,7 @@ const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'imagerie', label: 'Imagerie' },
   { cle: 'traitements', label: 'Plan de traitement' },
   { cle: 'devis', label: 'Devis' },
+  { cle: 'ordonnances', label: 'Ordonnances' },
   { cle: 'agenda', label: 'Rendez-vous' },
   { cle: 'notes', label: 'Notes cliniques' },
   { cle: 'facturation', label: 'Facturation' },
@@ -522,6 +524,8 @@ export function PatientDetail() {
       {onglet === 'imagerie' ? <OngletImagerie patient={patient} dentsSelectionnees={selection} /> : null}
 
       {onglet === 'devis' ? <OngletDevis patient={patient} /> : null}
+
+      {onglet === 'ordonnances' ? <OngletOrdonnances patient={patient} /> : null}
 
       {onglet === 'traitements' ? (
         <Card>

@@ -6,7 +6,7 @@
   "description": "Application de suivi des patients pour cabinet dentaire : schéma dentaire interactif, dossiers patients, plans de traitement, rendez-vous et facturation.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/post-build.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest run",

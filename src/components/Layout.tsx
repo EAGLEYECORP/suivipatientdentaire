@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '@/store/AppContext';
 import { cx, correspond, initiales } from '@/lib/utils';
+import { PaletteCommandes } from '@/components/PaletteCommandes';
 
 interface Lien {
   to: string;
@@ -28,7 +29,7 @@ const LIENS: Lien[] = [
 ];
 
 export function Layout() {
-  const { data } = useApp();
+  const { data, etatCoffre, verrouiller } = useApp();
   const navigate = useNavigate();
   const [recherche, setRecherche] = useState('');
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -47,6 +48,7 @@ export function Layout() {
 
   return (
     <div className="app-shell flex min-h-screen bg-slate-100">
+      <PaletteCommandes />
       <aside
         className={cx(
           'no-print fixed inset-y-0 left-0 z-40 w-64 shrink-0 border-r border-slate-200 bg-white transition-transform lg:static lg:translate-x-0',
@@ -143,9 +145,12 @@ export function Layout() {
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un patient (nom, téléphone, e-mail)…"
-              className="champ pl-9"
+              className="champ pl-9 pr-16"
               aria-label="Rechercher un patient"
             />
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 sm:block">
+              ⌘K
+            </kbd>
             {resultats.length > 0 ? (
               <ul className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
                 {resultats.map((p) => (
@@ -175,6 +180,24 @@ export function Layout() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            {etatCoffre === 'ouvert' ? (
+              <button
+                type="button"
+                onClick={verrouiller}
+                title="Verrouiller le coffre"
+                aria-label="Verrouiller le coffre"
+                className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5V10Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ) : null}
             <span className="hidden text-right text-xs leading-tight text-slate-500 sm:block">
               <span className="block font-semibold text-slate-700">
                 {data.cabinet.praticiens[0]?.nom ?? 'Praticien'}
