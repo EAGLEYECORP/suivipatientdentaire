@@ -1,0 +1,54 @@
+# Déploiement Netlify.
+#
+# L'application ne charge aucune ressource externe : ni CDN, ni police
+# distante, ni appel réseau à l'exécution. La politique de sécurité de
+# contenu ci-dessous en tire parti et verrouille tout le reste.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Le service worker ne doit jamais être servi depuis un cache long : sinon un
+# poste reste bloqué sur une version périmée de l'application.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# Sans le bon type MIME, le manifeste est ignoré et l'application n'est plus
+# installable.
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Les noms de fichiers compilés portent un hachage : ils ne changent jamais
+# sous un même nom et peuvent être mis en cache définitivement.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    # Outil clinique : pas d'indexation par les moteurs de recherche.
+    X-Robots-Tag = "noindex, nofollow"
+    # 'unsafe-inline' n'est requis que pour les attributs style de React.
+    # Aucun script inline n'est émis par la compilation : script-src reste strict.
+    # blob: couvre l'affichage des radios chargées depuis IndexedDB.
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"

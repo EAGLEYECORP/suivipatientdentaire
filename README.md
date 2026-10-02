@@ -248,6 +248,28 @@ npm run test
 
 ---
 
+## Déploiement
+
+`netlify.toml` est fourni et couvre la configuration complète :
+
+- commande de compilation et dossier publié, Node 22 ;
+- `sw.js` et `index.html` toujours revalidés — sans quoi un poste resterait
+  bloqué sur une version périmée ; `/assets/*` mis en cache définitivement
+  puisque leurs noms portent un hachage ;
+- `manifest.webmanifest` servi en `application/manifest+json`, faute de quoi
+  l'application cesse d'être installable sans aucun message d'erreur ;
+- en-têtes de sécurité, dont une **politique de sécurité de contenu stricte** :
+  l'application ne chargeant aucune ressource externe, `script-src` reste à
+  `'self'` sans `unsafe-inline`.
+
+La CSP a été vérifiée dans un navigateur contre l'application compilée : tous
+les écrans, l'import d'images (`blob:`), la génération de vignettes, le service
+worker, l'activation du coffre WebCrypto et l'export de sauvegarde, sans aucune
+violation.
+
+Le chiffrement et le service worker exigent un **contexte sécurisé** : HTTPS est
+indispensable, sinon les deux se désactivent silencieusement.
+
 ## Limites connues
 
 - **Denture mixte** : le schéma bascule entre denture permanente et temporaire ; il n'affiche pas
