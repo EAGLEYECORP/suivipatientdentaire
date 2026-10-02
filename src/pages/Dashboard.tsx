@@ -8,6 +8,7 @@ import { RevenueChart } from '@/components/RevenueChart';
 import { totalFacture, totalPaye, resteAPayer } from '@/lib/finance';
 import { formatMontant, formatHeure, formatDate, memeJour, initiales, age } from '@/lib/utils';
 import { STATUT_RDV_META } from '@/pages/Agenda';
+import { evaluerAlertes, type Alerte } from '@/lib/decision';
 
 function Tuile({
   label,
@@ -108,7 +109,37 @@ export function Dashboard() {
     return mois.map(({ label, valeur }) => ({ label, valeur }));
   }, [data.factures, maintenant]);
 
-  const alertes = data.patients.filter((p) => p.alertes.length > 0 || p.allergies.length > 0).slice(0, 6);
+  /** Le moteur de règles est passé sur tout le cabinet, pas seulement sur un dossier. */
+  const vigilance = useMemo(() => {
+    const parPatient = new Map<string, Alerte[]>();
+    for (const p of data.patients) {
+      if (!p.actif) continue;
+      const odonto = data.odontogrammes.find((o) => o.patientId === p.id);
+      const charting = data.chartingsParo
+        .filter((c) => c.patientId === p.id)
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
+      const liste = evaluerAlertes({
+        patient: p,
+        actes: data.actes.filter((a) => a.patientId === p.id),
+        dents: odonto?.dents ?? [],
+        charting,
+      }).filter((a) => a.severite === 'critique' || a.severite === 'elevee');
+      if (liste.length > 0) parPatient.set(p.id, liste);
+    }
+    return [...parPatient.entries()]
+      .map(([patientId, liste]) => ({ patient: patientsParId.get(patientId)!, liste }))
+      .sort((a, b) => {
+        const critA = a.liste.filter((x) => x.severite === 'critique').length;
+        const critB = b.liste.filter((x) => x.severite === 'critique').length;
+        return critB - critA || b.liste.length - a.liste.length;
+      });
+  }, [data.patients, data.odontogrammes, data.actes, data.chartingsParo, patientsParId]);
+
+  const totalAlertes = vigilance.reduce((n, v) => n + v.liste.length, 0);
+  const totalCritiques = vigilance.reduce(
+    (n, v) => n + v.liste.filter((a) => a.severite === 'critique').length,
+    0,
+  );
 
   return (
     <div className="space-y-5">
@@ -243,29 +274,39 @@ export function Dashboard() {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <Card>
-          <CardHeader titre="Alertes médicales" sousTitre="À vérifier avant tout soin" />
-          {alertes.length === 0 ? (
-            <EmptyState titre="Aucune alerte" description="Aucun patient ne présente d’allergie ou de contre-indication." />
+          <CardHeader
+            titre="Vigilance clinique"
+            sousTitre={
+              totalAlertes === 0
+                ? 'Aucun point de vigilance sur le cabinet'
+                : `${totalAlertes} point(s) à vérifier${totalCritiques > 0 ? `, dont ${totalCritiques} critique(s)` : ''}`
+            }
+          />
+          {vigilance.length === 0 ? (
+            <EmptyState
+              titre="Rien à signaler"
+              description="Aucune contre-indication ni lésion non prise en charge sur les dossiers actifs."
+            />
           ) : (
             <ul className="divide-y divide-slate-100">
-              {alertes.map((p) => (
+              {vigilance.slice(0, 5).map(({ patient: p, liste }) => (
                 <li key={p.id} className="px-5 py-3">
-                  <Link to={`/patients/${p.id}`} className="font-medium text-slate-800 hover:text-brand-700">
-                    {p.prenom} {p.nom}
-                  </Link>
-                  <span className="ml-2 text-xs text-slate-400">{age(p.dateNaissance)} ans</span>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {p.allergies.map((a) => (
-                      <Badge key={a} ton="danger">
-                        Allergie : {a}
-                      </Badge>
-                    ))}
-                    {p.alertes.map((a) => (
-                      <Badge key={a} ton="alerte">
-                        {a}
-                      </Badge>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <Link to={`/patients/${p.id}`} className="font-medium text-slate-800 hover:text-brand-700">
+                      {p.prenom} {p.nom}
+                    </Link>
+                    <span className="text-xs text-slate-400">{age(p.dateNaissance)} ans</span>
                   </div>
+                  <ul className="mt-1.5 space-y-1">
+                    {liste.slice(0, 3).map((a) => (
+                      <li key={a.regle} className="flex items-start gap-2 text-sm">
+                        <Badge ton={a.severite === 'critique' ? 'danger' : 'alerte'}>
+                          {a.severite === 'critique' ? 'Critique' : 'Élevée'}
+                        </Badge>
+                        <span className="text-slate-600">{a.titre}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>

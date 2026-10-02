@@ -14,6 +14,14 @@ import { OdontogrammeArcade } from '@/components/OdontogrammeArcade';
 import { ToothPanel } from '@/components/ToothPanel';
 import { PatientForm } from '@/components/PatientForm';
 import { OngletParodontie } from '@/components/perio/OngletParodontie';
+import { PanneauAlertes } from '@/components/PanneauAlertes';
+import { PanneauRisques } from '@/components/PanneauRisques';
+import {
+  evaluerAlertes,
+  evaluerRisqueCarieux,
+  evaluerRisqueParodontal,
+  intervalleRappelConseille,
+} from '@/lib/decision';
 import { ActeForm } from '@/components/ActeForm';
 import type { BrouillonActe } from '@/components/ActeForm';
 import { RdvForm } from '@/components/RdvForm';
@@ -113,6 +121,31 @@ export function PatientDetail() {
   );
 
   const resume = useMemo(() => resumerActes(actesPatient), [actesPatient]);
+
+  const dernierCharting = useMemo(
+    () =>
+      data.chartingsParo
+        .filter((c) => c.patientId === id)
+        .sort((a, b) => b.date.localeCompare(a.date))[0],
+    [data.chartingsParo, id],
+  );
+
+  const alertes = useMemo(
+    () =>
+      patient
+        ? evaluerAlertes({ patient, actes: actesPatient, dents: odonto.dents, charting: dernierCharting })
+        : [],
+    [patient, actesPatient, odonto.dents, dernierCharting],
+  );
+
+  const risqueCarieux = useMemo(
+    () => (patient ? evaluerRisqueCarieux(patient, odonto.dents) : null),
+    [patient, odonto.dents],
+  );
+  const risqueParo = useMemo(
+    () => (patient ? evaluerRisqueParodontal(patient, dernierCharting, odonto.dents) : null),
+    [patient, dernierCharting, odonto.dents],
+  );
   const soldeDu = facturesPatient.reduce((s, f) => s + (f.statut === 'annulee' ? 0 : resteAPayer(f)), 0);
 
   if (!patient) {
@@ -263,6 +296,18 @@ export function PatientDetail() {
           ))}
         </div>
       </Card>
+
+      {alertes.length > 0 ? (
+        <section aria-label="Points de vigilance">
+          <PanneauAlertes
+            alertes={alertes}
+            onDents={(d) => {
+              setSelection(d);
+              setOnglet('schema');
+            }}
+          />
+        </section>
+      ) : null}
 
       <div className="no-print flex flex-wrap gap-1 border-b border-slate-200">
         {ONGLETS.map((o) => (
@@ -752,6 +797,19 @@ export function PatientDetail() {
                 <p className="etiquette">Notes administratives</p>
                 <p className="whitespace-pre-wrap text-slate-700">{patient.notes || '—'}</p>
               </div>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader titre="Profil de risque" sousTitre="Calculé à partir du dossier et du dernier sondage" />
+            <CardBody>
+              {risqueCarieux && risqueParo ? (
+                <PanneauRisques
+                  carieux={risqueCarieux}
+                  parodontal={risqueParo}
+                  rappel={intervalleRappelConseille(risqueCarieux, risqueParo)}
+                />
+              ) : null}
             </CardBody>
           </Card>
 
