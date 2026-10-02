@@ -206,7 +206,7 @@ export function Dashboard() {
                 const p = patientsParId.get(r.patientId);
                 const meta = STATUT_RDV_META[r.statut];
                 return (
-                  <li key={r.id} className="flex items-center gap-4 px-5 py-3">
+                  <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
                     <span className="w-14 shrink-0 text-sm font-bold text-slate-900">
                       {formatHeure(r.debut)}
                     </span>

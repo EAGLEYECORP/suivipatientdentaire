@@ -128,7 +128,7 @@ const GRAINES: Graine[] = [
     ],
   },
   {
-    nom: 'Lopez', prenom: 'Inès', dateNaissance: '2016-06-21', sexe: 'F',
+    nom: 'Lopez', prenom: 'Inès', dateNaissance: '2020-06-21', sexe: 'F',
     telephone: '07 55 21 09 34', email: 'famille.lopez@email.fr', adresse: '9 rue de la Roquette, 75011 Paris',
     mutuelle: 'CPAM — CSS', allergies: ['Latex'], antecedents: [], alertes: ['Patiente mineure — accord parental requis'],
     risque: { grignotageSucre: true, expositionFluor: false }, rappelMois: 6,

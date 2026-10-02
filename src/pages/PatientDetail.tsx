@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Acte, EtatDent, Face, NoteClinique } from '@/types';
 import { useApp } from '@/store/AppContext';
@@ -31,7 +31,7 @@ import type { BrouillonActe } from '@/components/ActeForm';
 import { RdvForm } from '@/components/RdvForm';
 import type { BrouillonRdv } from '@/components/RdvForm';
 import { STATUT_RDV_META } from '@/pages/Agenda';
-import { ETATS } from '@/data/teeth';
+import { ETATS, toutesLesDents } from '@/data/teeth';
 import { resumerActes, resteAPayer, totalFacture, totalPaye } from '@/lib/finance';
 import {
   age,
@@ -103,6 +103,16 @@ export function PatientDetail() {
   const [brouillonNote, setBrouillonNote] = useState<Omit<NoteClinique, 'id'> | null>(null);
   const [selectionFacture, setSelectionFacture] = useState<string[]>([]);
 
+  // Changer de dossier remet l'écran à zéro : garder la dent sélectionnée ou
+  // la position du curseur de temps d'un autre patient n'aurait aucun sens.
+  useEffect(() => {
+    setOnglet('schema');
+    setSelection([]);
+    setPinceau(null);
+    setInstant(null);
+    setSelectionFacture([]);
+  }, [id]);
+
   const odonto = odontogramme(id);
   const etatsParDent = useMemo(
     () => Object.fromEntries(odonto.dents.map((d) => [d.numero, d])) as Record<number, (typeof odonto.dents)[number]>,
@@ -140,6 +150,16 @@ export function PatientDetail() {
   }, [instant, datesCles, data.journal, id, etatsParDent]);
 
   const remontee = instant !== null && !!datesCles[instant];
+
+  /**
+   * Dents relevées qui n'appartiennent pas à la dentition affichée : sans ce
+   * garde-fou, les lésions d'un enfant en denture mixte disparaîtraient
+   * silencieusement du schéma.
+   */
+  const dentsHorsVue = useMemo(() => {
+    const visibles = new Set(toutesLesDents(odonto.dentition));
+    return odonto.dents.filter((d) => !visibles.has(d.numero)).map((d) => d.numero);
+  }, [odonto.dentition, odonto.dents]);
 
   const dernierCharting = useMemo(
     () =>
@@ -392,6 +412,22 @@ export function PatientDetail() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <LegendeEtats pinceau={pinceau} onPinceau={setPinceau} />
               </div>
+              {dentsHorsVue.length > 0 ? (
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                  <strong>{dentsHorsVue.length} dent(s) relevée(s) hors de cette dentition</strong> :{' '}
+                  {dentsHorsVue.join(', ')}. Elles n’apparaissent pas sur le schéma affiché.{' '}
+                  <button
+                    type="button"
+                    className="font-semibold underline"
+                    onClick={() =>
+                      changerDentition(id, odonto.dentition === 'permanente' ? 'temporaire' : 'permanente')
+                    }
+                  >
+                    Basculer en dentition {odonto.dentition === 'permanente' ? 'temporaire' : 'permanente'}
+                  </button>
+                </div>
+              ) : null}
+
               {datesCles.length > 1 ? (
                 <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                   <div className="flex flex-wrap items-center gap-3">

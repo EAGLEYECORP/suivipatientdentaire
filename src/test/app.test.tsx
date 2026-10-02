@@ -104,3 +104,39 @@ describe('charting parodontal', () => {
     expect(cellule).toHaveValue('');
   });
 });
+
+describe('cohérence du schéma dentaire', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.location.hash = '';
+  });
+
+  it('affiche la denture temporaire d’un jeune enfant', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('link', { name: /patients/i }));
+    await user.click(await screen.findByText('Inès Lopez'));
+
+    const schema = await screen.findByRole('img', { name: /schéma dentaire anatomique/i });
+    // 54 est une molaire temporaire : elle doit être dessinée.
+    expect(within(schema).getAllByLabelText(/^Dent 54 — face/).length).toBeGreaterThan(0);
+    // 14 est sa remplaçante permanente : absente de cette vue.
+    expect(within(schema).queryByLabelText(/^Dent 14 — face/)).toBeNull();
+  });
+
+  it('ne masque jamais silencieusement une dent relevée hors de la dentition affichée', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('link', { name: /patients/i }));
+    await user.click(await screen.findByText('Inès Lopez'));
+    await screen.findByRole('img', { name: /schéma dentaire anatomique/i });
+
+    // En basculant en denture permanente, ses relevés temporaires sortent du
+    // champ : l'application doit le dire au lieu de les faire disparaître.
+    await user.selectOptions(screen.getByLabelText(/type de dentition/i), 'permanente');
+    expect(await screen.findByText(/dent\(s\) relevée\(s\) hors de cette dentition/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /basculer en dentition temporaire/i }));
+    expect(screen.queryByText(/hors de cette dentition/i)).toBeNull();
+  });
+});

@@ -11,6 +11,15 @@
   body {
     @apply bg-slate-100 text-slate-800 antialiased;
   }
+  /*
+   * Un enfant de grille a par défaut min-width:auto : il refuse de descendre
+   * sous la largeur minimale de son contenu et fait déborder la page sur
+   * petit écran. Les tableaux larges gardent leur propre conteneur défilant.
+   */
+  .grid > * {
+    min-width: 0;
+  }
+
   *:focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-1 ring-offset-white;
   }
