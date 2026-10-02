@@ -58,3 +58,79 @@ describe('jeu de démonstration', () => {
     }
   });
 });
+
+describe('coffre et magasin', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('écrit une enveloppe scellée, illisible sans la phrase', async () => {
+    const { creerCoffre, ouvrirCoffre } = await import('@/lib/crypto');
+    const { lireEnveloppe, ouvrirEnveloppe, sauvegarderChiffre } = await import('@/lib/storage');
+
+    const data = donneesDemo();
+    const coffre = await creerCoffre('phrase du cabinet 2026');
+    await sauvegarderChiffre(data, coffre);
+
+    // Sur le disque : aucun nom de patient en clair.
+    const brut = localStorage.getItem('suivi-patient-dentaire:v1')!;
+    expect(brut).not.toContain(data.patients[0].nom);
+
+    // La lecture simple ne rend rien : il faut ouvrir le coffre.
+    const enveloppe = lireEnveloppe();
+    expect(enveloppe.etat).toBe('chiffre');
+    expect(charger()).toBeNull();
+
+    if (enveloppe.etat !== 'chiffre') throw new Error('enveloppe inattendue');
+    const rouvert = await ouvrirCoffre('phrase du cabinet 2026', enveloppe.enveloppe.sel);
+    const relu = await ouvrirEnveloppe(enveloppe.enveloppe, rouvert);
+    expect(relu.patients).toHaveLength(data.patients.length);
+    expect(relu.journal.length).toBeGreaterThan(0);
+  });
+
+  it('refuse d’ouvrir avec une mauvaise phrase', async () => {
+    const { creerCoffre, ouvrirCoffre } = await import('@/lib/crypto');
+    const { lireEnveloppe, ouvrirEnveloppe, sauvegarderChiffre } = await import('@/lib/storage');
+
+    await sauvegarderChiffre(donneesDemo(), await creerCoffre('bonne phrase'));
+    const enveloppe = lireEnveloppe();
+    if (enveloppe.etat !== 'chiffre') throw new Error('enveloppe inattendue');
+    const faux = await ouvrirCoffre('mauvaise phrase', enveloppe.enveloppe.sel);
+    await expect(ouvrirEnveloppe(enveloppe.enveloppe, faux)).rejects.toThrow();
+  });
+
+  it('migre une sauvegarde v1 sans perdre de données', () => {
+    const ancien = {
+      version: 1,
+      cabinet: donneesDemo().cabinet,
+      patients: [
+        {
+          id: 'p1',
+          nom: 'Ancien',
+          prenom: 'Dossier',
+          dateNaissance: '1980-01-01',
+          sexe: 'F',
+          telephone: '0600000000',
+          email: '',
+          adresse: '',
+          numeroSecu: '',
+          mutuelle: '',
+          medecinTraitant: '',
+          allergies: ['Pénicilline'],
+          notes: '',
+          creeLe: '2024-01-01T00:00:00.000Z',
+          majLe: '2024-01-01T00:00:00.000Z',
+          actif: true,
+        },
+      ],
+    };
+    const migre = importerJSON(JSON.stringify(ancien));
+    expect(migre.version).toBe(2);
+    expect(migre.patients[0].allergies).toEqual(['Pénicilline']);
+    // Les champs nouveaux reçoivent des valeurs sûres.
+    expect(migre.patients[0].facteursRisque.tabac).toBe('non');
+    expect(migre.patients[0].rappelMois).toBe(6);
+    expect(migre.journal).toEqual([]);
+    expect(migre.chartingsParo).toEqual([]);
+  });
+});

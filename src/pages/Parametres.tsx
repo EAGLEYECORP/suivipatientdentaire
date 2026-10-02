@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { exporterJSON, importerJSON, telecharger } from '@/lib/storage';
+import { SectionSecurite } from '@/components/SectionSecurite';
 import { uid } from '@/lib/utils';
 
 export function Parametres() {
@@ -146,6 +147,8 @@ export function Parametres() {
           ) : null}
         </CardBody>
       </Card>
+
+      <SectionSecurite />
 
       <Card>
         <CardHeader
