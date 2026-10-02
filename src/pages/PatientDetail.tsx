@@ -14,6 +14,7 @@ import { OdontogrammeArcade } from '@/components/OdontogrammeArcade';
 import { ToothPanel } from '@/components/ToothPanel';
 import { PatientForm } from '@/components/PatientForm';
 import { OngletParodontie } from '@/components/perio/OngletParodontie';
+import { OngletImagerie } from '@/components/OngletImagerie';
 import { PanneauAlertes } from '@/components/PanneauAlertes';
 import { PanneauRisques } from '@/components/PanneauRisques';
 import { biographieDent, datesClesSchema, odontogrammeADate } from '@/lib/historique';
@@ -41,11 +42,12 @@ import {
   maintenant,
 } from '@/lib/utils';
 
-type Onglet = 'schema' | 'parodontie' | 'traitements' | 'agenda' | 'notes' | 'facturation' | 'dossier';
+type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'agenda' | 'notes' | 'facturation' | 'dossier';
 
 const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'schema', label: 'Schéma dentaire' },
   { cle: 'parodontie', label: 'Parodontie' },
+  { cle: 'imagerie', label: 'Imagerie' },
   { cle: 'traitements', label: 'Plan de traitement' },
   { cle: 'agenda', label: 'Rendez-vous' },
   { cle: 'notes', label: 'Notes cliniques' },
@@ -514,6 +516,8 @@ export function PatientDetail() {
       ) : null}
 
       {onglet === 'parodontie' ? <OngletParodontie patient={patient} /> : null}
+
+      {onglet === 'imagerie' ? <OngletImagerie patient={patient} dentsSelectionnees={selection} /> : null}
 
       {onglet === 'traitements' ? (
         <Card>

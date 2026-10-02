@@ -135,3 +135,29 @@ export function forcePhrase(phrase: string): { score: 0 | 1 | 2 | 3 | 4; libelle
   const s = Math.min(4, score) as 0 | 1 | 2 | 3 | 4;
   return { score: s, libelle: libelles[s] };
 }
+
+/* ------------------------------------------------------------------ *
+ * Scellement binaire (imagerie)
+ * ------------------------------------------------------------------ */
+
+export interface BlocChiffre {
+  iv: ArrayBuffer;
+  charge: ArrayBuffer;
+}
+
+/** Chiffre un binaire (radio, photo) avec la clé du coffre. */
+export async function scellerBinaire(donnees: ArrayBuffer, coffre: Coffre): Promise<BlocChiffre> {
+  const subtle = sousSysteme();
+  const iv = globalThis.crypto.getRandomValues(new Uint8Array(TAILLE_IV));
+  const charge = await subtle.encrypt({ name: 'AES-GCM', iv: iv as BufferSource }, coffre.cle, donnees);
+  return { iv: iv.buffer as ArrayBuffer, charge };
+}
+
+export async function descellerBinaire(bloc: BlocChiffre, coffre: Coffre): Promise<ArrayBuffer> {
+  const subtle = sousSysteme();
+  try {
+    return await subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(bloc.iv) }, coffre.cle, bloc.charge);
+  } catch {
+    throw new Error('Image illisible : clé de coffre incorrecte.');
+  }
+}

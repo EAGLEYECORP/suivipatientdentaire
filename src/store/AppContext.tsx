@@ -117,6 +117,8 @@ interface AppContextValue extends AppActions {
   data: AppData;
   praticienActif: string;
   etatCoffre: EtatCoffre;
+  /** Coffre ouvert, pour chiffrer aussi les binaires (imagerie). */
+  coffre: Coffre | null;
   /** Enveloppe scellée en attente de déverrouillage. */
   enveloppeVerrouillee: EnveloppeChiffree | null;
 }
@@ -1049,6 +1051,7 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       data,
       praticienActif,
       etatCoffre,
+      coffre,
       enveloppeVerrouillee,
       ajouterPatient,
       majPatient,
@@ -1097,6 +1100,7 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       data,
       praticienActif,
       etatCoffre,
+      coffre,
       enveloppeVerrouillee,
       ajouterPatient,
       majPatient,
