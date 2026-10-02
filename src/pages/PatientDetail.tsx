@@ -16,6 +16,7 @@ import { PatientForm } from '@/components/PatientForm';
 import { OngletParodontie } from '@/components/perio/OngletParodontie';
 import { PanneauAlertes } from '@/components/PanneauAlertes';
 import { PanneauRisques } from '@/components/PanneauRisques';
+import { biographieDent, datesClesSchema, odontogrammeADate } from '@/lib/historique';
 import {
   evaluerAlertes,
   evaluerRisqueCarieux,
@@ -86,6 +87,8 @@ export function PatientDetail() {
   const [selection, setSelection] = useState<number[]>([]);
   const [pinceau, setPinceau] = useState<EtatDent | null>(null);
   const [vueSchema, setVueSchema] = useState<'arcade' | 'grille'>('arcade');
+  /** Index dans les dates clés ; null = état courant. */
+  const [instant, setInstant] = useState<number | null>(null);
   const [editionPatient, setEditionPatient] = useState(false);
   const [suppression, setSuppression] = useState(false);
   const [acteForm, setActeForm] = useState<{ ouvert: boolean; acte?: Acte }>({ ouvert: false });
@@ -121,6 +124,16 @@ export function PatientDetail() {
   );
 
   const resume = useMemo(() => resumerActes(actesPatient), [actesPatient]);
+
+  const datesCles = useMemo(() => datesClesSchema(data.journal, id), [data.journal, id]);
+
+  /** Schéma rejoué à la date choisie, ou état courant. */
+  const etatsAffiches = useMemo(() => {
+    if (instant === null || !datesCles[instant]) return etatsParDent;
+    return odontogrammeADate(data.journal, id, datesCles[instant]);
+  }, [instant, datesCles, data.journal, id, etatsParDent]);
+
+  const remontee = instant !== null && !!datesCles[instant];
 
   const dernierCharting = useMemo(
     () =>
@@ -373,6 +386,48 @@ export function PatientDetail() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <LegendeEtats pinceau={pinceau} onPinceau={setPinceau} />
               </div>
+              {datesCles.length > 1 ? (
+                <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-brand-600"
+                        checked={remontee}
+                        onChange={(e) => setInstant(e.target.checked ? datesCles.length - 1 : null)}
+                      />
+                      Remonter le temps
+                    </label>
+                    {remontee ? (
+                      <>
+                        <input
+                          type="range"
+                          min={0}
+                          max={datesCles.length - 1}
+                          value={instant ?? datesCles.length - 1}
+                          onChange={(e) => setInstant(Number(e.target.value))}
+                          aria-label="Date du schéma dentaire"
+                          className="h-1.5 flex-1 min-w-[180px] cursor-pointer accent-brand-600"
+                        />
+                        <span className="text-sm font-semibold text-brand-800">
+                          {formatDate(datesCles[instant ?? 0])}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500">
+                        {datesCles.length} modifications tracées depuis l’ouverture du dossier.
+                      </span>
+                    )}
+                  </div>
+                  {remontee ? (
+                    <p className="mt-1.5 text-xs text-brand-800">
+                      Schéma reconstitué à partir du journal : lecture seule. Décochez pour revenir à
+                      l’état courant.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {pinceau ? (
                 <p className="mb-3 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800">
                   Mode peinture actif : <strong>{ETATS[pinceau].libelle}</strong>. Cliquez sur une face pour
@@ -386,20 +441,22 @@ export function PatientDetail() {
               {vueSchema === 'arcade' ? (
                 <OdontogrammeArcade
                   dentition={odonto.dentition}
-                  etats={etatsParDent}
+                  etats={etatsAffiches}
                   selection={selection}
                   onSelectionDent={basculerSelection}
-                  pinceau={pinceau}
+                  pinceau={remontee ? null : pinceau}
                   onPeindreFace={peindreFace}
+                  lectureSeule={remontee}
                 />
               ) : (
                 <DentalChart
                   dentition={odonto.dentition}
-                  etats={etatsParDent}
+                  etats={etatsAffiches}
                   selection={selection}
                   onSelectionDent={basculerSelection}
-                  pinceau={pinceau}
+                  pinceau={remontee ? null : pinceau}
                   onPeindreFace={peindreFace}
+                  lectureSeule={remontee}
                 />
               )}
 
@@ -431,6 +488,7 @@ export function PatientDetail() {
                   numero={derniereDent}
                   etat={etatsParDent[derniereDent]}
                   actes={actesPatient.filter((a) => a.dents.includes(derniereDent))}
+                  biographie={biographieDent(data.journal, id, derniereDent)}
                   onChangerEtat={(e) => majDent(id, derniereDent, { etat: e })}
                   onBasculerFace={(f) => {
                     const courant = etatsParDent[derniereDent];

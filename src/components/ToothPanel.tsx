@@ -1,14 +1,16 @@
-import type { Acte, DentEtat, EtatDent, Face } from '@/types';
+import type { Acte, DentEtat, EtatDent, EvenementJournal, Face } from '@/types';
 import { ETATS, LIBELLE_FACE, LISTE_ETATS, facesDisponibles, nomDent } from '@/data/teeth';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Textarea } from '@/components/ui/Field';
-import { cx, formatDate } from '@/lib/utils';
+import { cx, formatDate, formatDateHeure } from '@/lib/utils';
 
 interface Props {
   numero: number;
   etat: DentEtat | undefined;
   actes: Acte[];
+  /** Journal filtré sur cette dent, du plus récent au plus ancien. */
+  biographie: EvenementJournal[];
   onChangerEtat: (e: EtatDent) => void;
   onBasculerFace: (f: Face) => void;
   onNote: (note: string) => void;
@@ -20,6 +22,7 @@ export function ToothPanel({
   numero,
   etat,
   actes,
+  biographie,
   onChangerEtat,
   onBasculerFace,
   onNote,
@@ -119,6 +122,27 @@ export function ToothPanel({
         <Button taille="sm" variante="secondaire" onClick={onReinitialiser}>
           Réinitialiser
         </Button>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Biographie de la dent ({biographie.length})
+        </p>
+        {biographie.length === 0 ? (
+          <p className="text-sm text-slate-400">Aucun événement enregistré sur cette dent.</p>
+        ) : (
+          <ol className="relative space-y-2 border-l border-slate-200 pl-4">
+            {biographie.slice(0, 8).map((e) => (
+              <li key={e.id} className="relative text-sm">
+                <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-brand-500" />
+                <p className="text-slate-700">{e.resume}</p>
+                <p className="text-xs text-slate-400">
+                  {formatDateHeure(e.date)} · {e.auteur}
+                </p>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
 
       <div>

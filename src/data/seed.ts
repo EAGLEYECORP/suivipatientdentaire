@@ -1,6 +1,7 @@
 import type {
   AppData,
   Acte,
+  DentEtat,
   EvenementJournal,
   LigneDevis,
   ChartingParo,
@@ -230,6 +231,8 @@ export function donneesDemo(): AppData {
 
   const patients: Patient[] = [];
   const odontogrammes: Odontogramme[] = [];
+  /** Suite complète des états dentaires saisis, doublons compris. */
+  const traces: Array<{ patientId: string; dent: DentEtat }> = [];
 
   GRAINES.forEach((g, i) => {
     const id = `pat_${i + 1}`;
@@ -260,16 +263,26 @@ export function donneesDemo(): AppData {
 
     const naissance = new Date(`${g.dateNaissance}T00:00:00`);
     const ans = new Date().getFullYear() - naissance.getFullYear();
+
+    // Une dent peut avoir plusieurs états successifs dans la graine (une 15
+    // dépulpée puis couronnée) : le schéma ne garde que le dernier, le journal
+    // garde la suite complète. C'est ce qui nourrit la biographie de la dent.
+    const etats = g.dents.map((d, rang) => ({
+      numero: d.numero,
+      etat: d.etat,
+      faces: d.faces,
+      note: d.note ?? '',
+      majLe: jour(-150 + rang * 23, 10, 30),
+    }));
+    etats.forEach((d) => traces.push({ patientId: id, dent: d }));
+
+    const courant = new Map<number, (typeof etats)[number]>();
+    for (const d of etats) courant.set(d.numero, d);
+
     odontogrammes.push({
       patientId: id,
       dentition: ans < 7 ? 'temporaire' : 'permanente',
-      dents: g.dents.map((d) => ({
-        numero: d.numero,
-        etat: d.etat,
-        faces: d.faces,
-        note: d.note ?? '',
-        majLe: jour(-10),
-      })),
+      dents: [...courant.values()],
     });
   });
 
@@ -371,7 +384,7 @@ export function donneesDemo(): AppData {
     rendezVous,
     factures,
     notes,
-    journal: journalDemo(patients, actes, factures),
+    journal: journalDemo(patients, actes, factures, traces),
     chartingsParo: [chartingDemo('pat_2', p2.nom, 12), chartingDemo('pat_5', p1.nom, 4)],
     images: [],
     devis: devisDemo(p1.nom),
@@ -480,7 +493,12 @@ function devisDemo(praticien: string): Devis[] {
 }
 
 /** Journal rétroactif cohérent avec les données de démonstration. */
-function journalDemo(patients: Patient[], actes: Acte[], factures: Facture[]): EvenementJournal[] {
+function journalDemo(
+  patients: Patient[],
+  actes: Acte[],
+  factures: Facture[],
+  traces: Array<{ patientId: string; dent: DentEtat }>,
+): EvenementJournal[] {
   const evts: EvenementJournal[] = [];
   const pousser = (
     date: string,
@@ -521,6 +539,23 @@ function journalDemo(patients: Patient[], actes: Acte[], factures: Facture[]): E
       );
     }
   }
+  // Chaque état dentaire enregistré a laissé une trace datée : c'est ce qui
+  // rend la remontée temporelle du schéma possible.
+  for (const { patientId, dent } of traces) {
+    evts.push({
+      id: uid('ev'),
+      date: dent.majLe,
+      auteur: praticien,
+      type: 'dent.maj',
+      patientId,
+      dent: dent.numero,
+      cible: `Dent ${dent.numero}`,
+      resume: `Dent ${dent.numero} : ${dent.etat}${dent.faces.length ? ` (faces ${dent.faces.join('/')})` : ''}.`,
+      avant: null,
+      apres: dent,
+    });
+  }
+
   for (const f of factures) {
     pousser(f.creeLe, praticien, 'facture.cree', f.patientId, f.numero, `Facture ${f.numero} émise.`);
     for (const pay of f.paiements) {
