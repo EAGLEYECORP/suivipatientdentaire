@@ -3,6 +3,7 @@ import type { Patient, Sexe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, ListeTexte, Select, Textarea } from '@/components/ui/Field';
+import { facteursRisqueVides } from '@/data/seed';
 
 export type BrouillonPatient = Omit<Patient, 'id' | 'creeLe' | 'majLe'>;
 
@@ -22,6 +23,9 @@ export function patientVide(): BrouillonPatient {
     antecedents: [],
     traitementsEnCours: [],
     alertes: [],
+    facteursRisque: facteursRisqueVides(),
+    rappelMois: 6,
+    dernierControle: null,
     notes: '',
     actif: true,
   };

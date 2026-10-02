@@ -1,4 +1,4 @@
-import type { Acte, Facture } from '@/types';
+import type { Acte, Devis, Facture, VarianteDevis } from '@/types';
 import { arrondi2 } from '@/lib/utils';
 
 export function totalFacture(f: Facture): number {
@@ -59,4 +59,39 @@ export function prochainNumeroFacture(factures: Facture[], date = new Date()): s
     .filter((n) => Number.isFinite(n))
     .reduce((m, n) => Math.max(m, n), 0);
   return `${prefixe}${String(max + 1).padStart(4, '0')}`;
+}
+
+/** Numéro de devis séquentiel, remis à zéro chaque année : DE-2026-0007. */
+export function prochainNumeroDevis(devis: Devis[], date = new Date()): string {
+  const prefixe = `DE-${date.getFullYear()}-`;
+  const max = devis
+    .filter((d) => d.numero.startsWith(prefixe))
+    .map((d) => Number.parseInt(d.numero.slice(prefixe.length), 10))
+    .filter((n) => Number.isFinite(n))
+    .reduce((m, n) => Math.max(m, n), 0);
+  return `${prefixe}${String(max + 1).padStart(4, '0')}`;
+}
+
+export interface TotauxVariante {
+  total: number;
+  baseRemboursement: number;
+  resteACharge: number;
+}
+
+export function totauxVariante(v: VarianteDevis): TotauxVariante {
+  const total = v.lignes.reduce((s, l) => s + l.quantite * l.tarif, 0);
+  const base = v.lignes.reduce((s, l) => s + l.quantite * l.baseRemboursement, 0);
+  return {
+    total: arrondi2(total),
+    baseRemboursement: arrondi2(base),
+    resteACharge: arrondi2(Math.max(0, total - base)),
+  };
+}
+
+/** Un devis est périmé lorsque sa date de validité est dépassée sans décision. */
+export function devisExpire(d: Devis, reference = new Date()): boolean {
+  if (d.statut === 'accepte' || d.statut === 'refuse') return false;
+  const limite = new Date(`${d.date}T00:00:00`);
+  limite.setDate(limite.getDate() + d.validiteJours);
+  return reference > limite;
 }

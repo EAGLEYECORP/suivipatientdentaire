@@ -1,6 +1,25 @@
-import type { AppData, Acte, Facture, NoteClinique, Odontogramme, Patient, RendezVous } from '@/types';
+import type {
+  AppData,
+  Acte,
+  EvenementJournal,
+  LigneDevis,
+  ChartingParo,
+  DentPerio,
+  Devis,
+  FacteursRisque,
+  Facture,
+  MesureSite,
+  NoteClinique,
+  Odontogramme,
+  Patient,
+  RendezVous,
+} from '@/types';
 import { CATALOGUE_ACTES, trouverActe } from '@/data/actes';
+import { SITES_PERIO, estPluriradiculee } from '@/data/perio';
+import { ARCADE_INF_PERM, ARCADE_SUP_PERM, position } from '@/data/teeth';
 import { maintenant, uid, arrondi2 } from '@/lib/utils';
+
+export const VERSION_DEMO = 2;
 
 function jour(decalage: number, heure = 9, minute = 0): string {
   const d = new Date();
@@ -15,6 +34,19 @@ function jourISO(decalage: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function facteursRisqueVides(): FacteursRisque {
+  return {
+    tabac: 'non',
+    diabete: 'non',
+    grossesse: false,
+    boucheSeche: false,
+    grignotageSucre: false,
+    expositionFluor: true,
+    hygieneInsuffisante: false,
+    appareillage: false,
+  };
+}
+
 export function cabinetParDefaut(): AppData['cabinet'] {
   return {
     nom: 'Cabinet Dentaire Saint-Michel',
@@ -25,6 +57,7 @@ export function cabinetParDefaut(): AppData['cabinet'] {
     devise: 'EUR',
     tauxTva: 0,
     dureeRdvDefaut: 30,
+    verrouillageMinutes: 15,
     praticiens: [
       { id: 'prat_1', nom: 'Dr Claire Fontaine', specialite: 'Omnipratique', couleur: '#1d66f0' },
       { id: 'prat_2', nom: 'Dr Samir Benali', specialite: 'Endodontie', couleur: '#14b8a6' },
@@ -43,6 +76,11 @@ export function donneesVides(): AppData {
     rendezVous: [],
     factures: [],
     notes: [],
+    journal: [],
+    chartingsParo: [],
+    images: [],
+    devis: [],
+    ordonnances: [],
   };
 }
 
@@ -58,6 +96,8 @@ interface Graine {
   allergies: string[];
   antecedents: string[];
   alertes: string[];
+  risque?: Partial<FacteursRisque>;
+  rappelMois?: number;
   dents: Array<{ numero: number; etat: Odontogramme['dents'][number]['etat']; faces: Odontogramme['dents'][number]['faces']; note?: string }>;
 }
 
@@ -78,6 +118,7 @@ const GRAINES: Graine[] = [
     telephone: '06 98 32 11 47', email: 't.bernard@email.fr', adresse: '22 av. Parmentier, 75011 Paris',
     mutuelle: 'Harmonie Mutuelle', allergies: [], antecedents: ['Hypertension', 'Diabète type 2'],
     alertes: ['Sous anticoagulant (Kardegic) — prévenir avant toute avulsion'],
+    risque: { tabac: 'dix_ou_plus', diabete: 'desequilibre', hygieneInsuffisante: true }, rappelMois: 3,
     dents: [
       { numero: 11, etat: 'fracture', faces: ['V'], note: 'Fêlure amélaire suite à un choc.' },
       { numero: 24, etat: 'endodontie', faces: [] },
@@ -89,6 +130,7 @@ const GRAINES: Graine[] = [
     nom: 'Lopez', prenom: 'Inès', dateNaissance: '2016-06-21', sexe: 'F',
     telephone: '07 55 21 09 34', email: 'famille.lopez@email.fr', adresse: '9 rue de la Roquette, 75011 Paris',
     mutuelle: 'CPAM — CSS', allergies: ['Latex'], antecedents: [], alertes: ['Patiente mineure — accord parental requis'],
+    risque: { grignotageSucre: true, expositionFluor: false }, rappelMois: 6,
     dents: [
       { numero: 54, etat: 'carie', faces: ['O', 'D'] },
       { numero: 75, etat: 'obturation', faces: ['O'] },
@@ -99,6 +141,7 @@ const GRAINES: Graine[] = [
     nom: 'Nguyen', prenom: 'Paul', dateNaissance: '1994-02-08', sexe: 'M',
     telephone: '06 44 78 12 65', email: 'paul.nguyen@email.fr', adresse: '3 bd Voltaire, 75011 Paris',
     mutuelle: 'Alan', allergies: [], antecedents: ['Tabagisme 10 cig/j'], alertes: [],
+    risque: { tabac: 'dix_ou_plus', grignotageSucre: true, hygieneInsuffisante: true }, rappelMois: 6,
     dents: [
       { numero: 17, etat: 'carie', faces: ['M', 'O'] },
       { numero: 27, etat: 'carie', faces: ['D'] },
@@ -110,6 +153,7 @@ const GRAINES: Graine[] = [
     telephone: '06 21 66 03 12', email: 's.cohen@email.fr', adresse: '48 rue Saint-Maur, 75011 Paris',
     mutuelle: 'Malakoff Humanis', allergies: ['Iode'], antecedents: ['Ostéoporose', 'Prise de bisphosphonates'],
     alertes: ['Bisphosphonates — risque d’ostéonécrose, éviter la chirurgie'],
+    risque: { boucheSeche: true, hygieneInsuffisante: true }, rappelMois: 4,
     dents: [
       { numero: 13, etat: 'couronne', faces: [] },
       { numero: 12, etat: 'bridge', faces: [] },
@@ -122,6 +166,7 @@ const GRAINES: Graine[] = [
     nom: 'Martin', prenom: 'Lucas', dateNaissance: '2008-12-30', sexe: 'M',
     telephone: '07 12 98 44 51', email: 'martin.famille@email.fr', adresse: '17 rue Sedaine, 75011 Paris',
     mutuelle: 'AXA', allergies: [], antecedents: [], alertes: ['Traitement orthodontique en cours'],
+    risque: { appareillage: true, grignotageSucre: true }, rappelMois: 4,
     dents: [
       { numero: 16, etat: 'obturation', faces: ['O'] },
       { numero: 26, etat: 'obturation', faces: ['O'] },
@@ -204,6 +249,9 @@ export function donneesDemo(): AppData {
       antecedents: g.antecedents,
       traitementsEnCours: [],
       alertes: g.alertes,
+      facteursRisque: { ...facteursRisqueVides(), ...(g.risque ?? {}) },
+      rappelMois: g.rappelMois ?? 6,
+      dernierControle: jourISO(-30 - i * 20),
       notes: '',
       creeLe: jour(-200 + i * 7),
       majLe: jour(-3 + i),
@@ -314,5 +362,177 @@ export function donneesDemo(): AppData {
     { id: uid('note'), patientId: 'pat_7', date: jour(-2, 17, 0), auteur: p1.nom, categorie: 'urgence', contenu: 'Fracture coronaire 21 suite à une chute. Test de vitalité positif. Reconstitution provisoire posée.', dents: [21] },
   ];
 
-  return { version: 1, cabinet, patients, odontogrammes, actes, rendezVous, factures, notes };
+  return {
+    version: VERSION_DEMO,
+    cabinet,
+    patients,
+    odontogrammes,
+    actes,
+    rendezVous,
+    factures,
+    notes,
+    journal: journalDemo(patients, actes, factures),
+    chartingsParo: [chartingDemo('pat_2', p2.nom, 12), chartingDemo('pat_5', p1.nom, 4)],
+    images: [],
+    devis: devisDemo(p1.nom),
+    ordonnances: [],
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Générateurs de démonstration pour les modules avancés
+ * ------------------------------------------------------------------ */
+
+function mesure(pd: number, rec: number, bop: boolean, plaque = false, pus = false): MesureSite {
+  return { pd, rec, bop, plaque, pus };
+}
+
+/**
+ * Charting parodontal réaliste : sondages plus profonds en postérieur,
+ * saignement corrélé aux poches, récessions sur les secteurs atteints.
+ */
+function chartingDemo(patientId: string, praticien: string, severite: number): ChartingParo {
+  const dents: DentPerio[] = [...ARCADE_SUP_PERM, ...ARCADE_INF_PERM].map((numero) => {
+    const posterieure = position(numero) >= 6;
+    const intermediaire = position(numero) >= 4;
+    const base = posterieure ? 3 : intermediaire ? 2 : 2;
+    const sites = {} as DentPerio['sites'];
+    SITES_PERIO.forEach((site, i) => {
+      const interdentaire = site !== 'V' && site !== 'L';
+      const bonus = interdentaire ? 1 : 0;
+      const bruit = (numero * 7 + i * 13 + severite * 3) % 4 === 0 ? 1 : 0;
+      const pd = Math.min(10, base + bonus + bruit + (posterieure ? Math.floor(severite / 5) : 0));
+      const rec = pd >= 5 ? Math.min(4, Math.floor(severite / 4)) : 0;
+      sites[site] = mesure(pd, rec, pd >= 4, (numero + i) % 3 === 0, pd >= 7);
+    });
+    return {
+      numero,
+      sites,
+      mobilite: (posterieure && severite >= 10 && numero % 7 === 0 ? 1 : 0) as DentPerio['mobilite'],
+      furcation: (estPluriradiculee(numero) && severite >= 10 && numero % 5 === 0 ? 1 : 0) as DentPerio['furcation'],
+    };
+  });
+
+  return {
+    id: uid('paro'),
+    patientId,
+    date: jour(-20),
+    praticien,
+    dents,
+    perteOsseusePct: severite >= 10 ? 35 : 12,
+    fumeur: severite >= 10 ? 'dix_ou_plus' : 'non',
+    diabete: severite >= 10 ? 'desequilibre' : 'non',
+    notes: severite >= 10 ? 'Sondage complet. Réévaluation à 3 mois après assainissement.' : 'Sondage de contrôle.',
+  };
+}
+
+/** Devis à trois variantes pour le remplacement de la 47 absente. */
+function devisDemo(praticien: string): Devis[] {
+  const ligne = (codeActe: string, libelle: string, dents: number[], tarif: number, base: number): LigneDevis => ({
+    id: uid('lig'),
+    codeActe,
+    libelle,
+    dents,
+    quantite: 1,
+    tarif,
+    baseRemboursement: base,
+  });
+
+  return [
+    {
+      id: uid('dev'),
+      numero: `DE-${new Date().getFullYear()}-0001`,
+      patientId: 'pat_2',
+      date: jourISO(-6),
+      praticien,
+      variantes: [
+        {
+          id: 'var_implant',
+          nom: 'Implant unitaire',
+          description:
+            'Solution de référence : aucune dent voisine délabrée, préservation de l’os, longévité la plus élevée.',
+          lignes: [
+            ligne('LBLD010', 'Pose d’implant intra-osseux', [47], 900, 0),
+            ligne('HBLD038', 'Couronne céramique sur implant', [47], 700, 0),
+          ],
+        },
+        {
+          id: 'var_bridge',
+          nom: 'Bridge 3 éléments',
+          description: 'Durée de traitement plus courte, mais nécessite de tailler les dents 46 et 48.',
+          lignes: [ligne('HBLD033', 'Bridge céramo-métallique 3 éléments', [46, 47, 48], 1200, 279.5)],
+        },
+        {
+          id: 'var_amovible',
+          nom: 'Prothèse amovible partielle',
+          description: 'Solution économique et réversible, confort moindre et maintenance régulière.',
+          lignes: [ligne('HBLD402', 'Prothèse amovible résine', [47], 450, 193.5)],
+        },
+      ],
+      varianteAcceptee: null,
+      dateDecision: null,
+      statut: 'presente',
+      validiteJours: 90,
+      notes: 'Devis remis en main propre et commenté au fauteuil.',
+      creeLe: jour(-6),
+    },
+  ];
+}
+
+/** Journal rétroactif cohérent avec les données de démonstration. */
+function journalDemo(patients: Patient[], actes: Acte[], factures: Facture[]): EvenementJournal[] {
+  const evts: EvenementJournal[] = [];
+  const pousser = (
+    date: string,
+    auteur: string,
+    type: EvenementJournal['type'],
+    patientId: string | null,
+    cible: string,
+    resume: string,
+    dent: number | null = null,
+  ) => {
+    evts.push({ id: uid('ev'), date, auteur, type, patientId, dent, cible, resume, avant: null, apres: null });
+  };
+
+  const praticien = 'Dr Claire Fontaine';
+  for (const p of patients) {
+    pousser(p.creeLe, praticien, 'patient.cree', p.id, `${p.prenom} ${p.nom}`, 'Création du dossier patient.');
+  }
+  for (const a of actes) {
+    const p = patients.find((x) => x.id === a.patientId);
+    pousser(
+      a.creeLe,
+      a.praticien,
+      'acte.cree',
+      a.patientId,
+      a.libelle,
+      `Acte « ${a.libelle} » ajouté au plan de traitement de ${p ? p.prenom : ''}.`,
+      a.dents[0] ?? null,
+    );
+    if (a.statut === 'realise' && a.dateRealisation) {
+      pousser(
+        `${a.dateRealisation}T11:00:00.000Z`,
+        a.praticien,
+        'acte.maj',
+        a.patientId,
+        a.libelle,
+        `Acte « ${a.libelle} » marqué réalisé.`,
+        a.dents[0] ?? null,
+      );
+    }
+  }
+  for (const f of factures) {
+    pousser(f.creeLe, praticien, 'facture.cree', f.patientId, f.numero, `Facture ${f.numero} émise.`);
+    for (const pay of f.paiements) {
+      pousser(
+        `${pay.date}T15:00:00.000Z`,
+        praticien,
+        'paiement.ajoute',
+        f.patientId,
+        f.numero,
+        `Règlement de ${pay.montant.toFixed(2)} € encaissé sur ${f.numero}.`,
+      );
+    }
+  }
+  return evts.sort((a, b) => a.date.localeCompare(b.date));
 }
