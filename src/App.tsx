@@ -8,6 +8,7 @@ import { PatientDetail } from '@/pages/PatientDetail';
 import { Agenda } from '@/pages/Agenda';
 import { Traitements } from '@/pages/Traitements';
 import { Facturation } from '@/pages/Facturation';
+import { Pilotage } from '@/pages/Pilotage';
 import { Parametres } from '@/pages/Parametres';
 
 function Racine() {
@@ -23,6 +24,7 @@ function Racine() {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/traitements" element={<Traitements />} />
           <Route path="/facturation" element={<Facturation />} />
+          <Route path="/pilotage" element={<Pilotage />} />
           <Route path="/parametres" element={<Parametres />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

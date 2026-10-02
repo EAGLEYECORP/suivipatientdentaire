@@ -23,6 +23,7 @@ const LIENS: Lien[] = [
   { to: '/agenda', label: 'Agenda', icone: <Icone d="M8 3v3m8-3v3M3.5 9h17M5 5h14a1.5 1.5 0 0 1 1.5 1.5v13A1.5 1.5 0 0 1 19 21H5a1.5 1.5 0 0 1-1.5-1.5v-13A1.5 1.5 0 0 1 5 5Z" /> },
   { to: '/traitements', label: 'Traitements', icone: <Icone d="M9 3c-2.2 0-3.5 1.8-3.5 4 0 1.4-.5 2.4-.5 4 0 4 1.5 10 3 10s1.5-4 4-4 2.5 4 4 4 3-6 3-10c0-1.6-.5-2.6-.5-4 0-2.2-1.3-4-3.5-4-1.4 0-2.2.8-3 .8S10.4 3 9 3Z" /> },
   { to: '/facturation', label: 'Facturation', icone: <Icone d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6M9 12h6M9 16h3" /> },
+  { to: '/pilotage', label: 'Pilotage', icone: <Icone d="M4 19V10m5 9V5m5 14v-7m5 7V8" /> },
   { to: '/parametres', label: 'Paramètres', icone: <Icone d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.4 3H9.6l-.5 2.6c-.7.3-1.4.7-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1c.6.5 1.3.9 2 1.2l.5 2.6h4.8l.5-2.6c.7-.3 1.4-.7 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z" /> },
 ];
 
