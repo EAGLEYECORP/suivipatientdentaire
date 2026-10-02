@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '@/App';
 
@@ -139,4 +139,36 @@ describe('cohérence du schéma dentaire', () => {
     await user.click(screen.getByRole('button', { name: /basculer en dentition temporaire/i }));
     expect(screen.queryByText(/hors de cette dentition/i)).toBeNull();
   });
+});
+
+describe('journal et saisie', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.location.hash = '';
+  });
+
+  it('n’inscrit qu’un seul événement pour une note saisie caractère par caractère', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('link', { name: /patients/i }));
+    await user.click(await screen.findByText('Marie Durand'));
+
+    const schema = await screen.findByRole('img', { name: /schéma dentaire anatomique/i });
+    await user.click(within(schema).getAllByLabelText(/^Dent 21 — face/)[0]);
+    await screen.findByRole('heading', { name: /^dent 21$/i });
+
+    const compte = () => {
+      const titre = screen.getByText(/biographie de la dent/i).textContent ?? '';
+      return Number(titre.match(/\((\d+)\)/)?.[1] ?? 0);
+    };
+    const avant = compte();
+
+    const champ = screen.getByPlaceholderText(/sensibilité au froid/i);
+    await user.type(champ, 'Fêlure amélaire à surveiller');
+    // La sortie du champ engage la note sans attendre la pause de frappe.
+    await user.tab();
+
+    await waitFor(() => expect(compte()).toBe(avant + 1));
+    expect(champ).toHaveValue('Fêlure amélaire à surveiller');
+  }, 15000);
 });

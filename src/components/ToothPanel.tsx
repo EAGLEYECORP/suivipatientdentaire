@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Textarea } from '@/components/ui/Field';
 import { cx, formatDate, formatDateHeure } from '@/lib/utils';
+import { useChampDiffere } from '@/lib/champDiffere';
 
 interface Props {
   numero: number;
@@ -32,6 +33,7 @@ export function ToothPanel({
   const courant: EtatDent = etat?.etat ?? 'saine';
   const faces = etat?.faces ?? [];
   const disponibles = facesDisponibles(numero);
+  const note = useChampDiffere(etat?.note ?? '', onNote);
 
   return (
     <div className="space-y-4">
@@ -109,9 +111,10 @@ export function ToothPanel({
         <span className="etiquette">Note clinique sur la dent</span>
         <Textarea
           rows={3}
-          value={etat?.note ?? ''}
+          value={note.brouillon}
           placeholder="Sensibilité au froid, radio à contrôler…"
-          onChange={(e) => onNote(e.target.value)}
+          onChange={(e) => note.setBrouillon(e.target.value)}
+          onBlur={note.engagerMaintenant}
         />
       </div>
 

@@ -30,7 +30,7 @@ import { ActeForm } from '@/components/ActeForm';
 import type { BrouillonActe } from '@/components/ActeForm';
 import { RdvForm } from '@/components/RdvForm';
 import type { BrouillonRdv } from '@/components/RdvForm';
-import { STATUT_RDV_META } from '@/pages/Agenda';
+import { STATUT_RDV_META } from '@/data/rendezVous';
 import { ETATS, toutesLesDents } from '@/data/teeth';
 import { resumerActes, resteAPayer, totalFacture, totalPaye } from '@/lib/finance';
 import {
@@ -200,6 +200,12 @@ export function PatientDetail() {
   }
 
   const derniereDent = selection[selection.length - 1];
+
+  // Le journal est parcouru et trié : à mémoriser, sinon chaque frappe le relit.
+  const biographie = useMemo(
+    () => (derniereDent === undefined ? [] : biographieDent(data.journal, id, derniereDent)),
+    [data.journal, id, derniereDent],
+  );
   const dentsAvecAnomalie = odonto.dents.filter((d) => d.etat !== 'saine');
 
   const basculerSelection = (numero: number, evenement: { ctrl: boolean }) => {
@@ -530,7 +536,7 @@ export function PatientDetail() {
                   numero={derniereDent}
                   etat={etatsParDent[derniereDent]}
                   actes={actesPatient.filter((a) => a.dents.includes(derniereDent))}
-                  biographie={biographieDent(data.journal, id, derniereDent)}
+                  biographie={biographie}
                   onChangerEtat={(e) => majDent(id, derniereDent, { etat: e })}
                   onBasculerFace={(f) => {
                     const courant = etatsParDent[derniereDent];

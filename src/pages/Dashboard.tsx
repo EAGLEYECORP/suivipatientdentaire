@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { RevenueChart } from '@/components/RevenueChart';
 import { totalFacture, totalPaye, resteAPayer } from '@/lib/finance';
 import { formatMontant, formatHeure, formatDate, memeJour, initiales, age } from '@/lib/utils';
-import { STATUT_RDV_META } from '@/pages/Agenda';
+import { STATUT_RDV_META } from '@/data/rendezVous';
 import { evaluerAlertes, type Alerte } from '@/lib/decision';
 
 function Tuile({

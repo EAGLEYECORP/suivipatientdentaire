@@ -45,6 +45,9 @@ type BrouillonEvenement = {
 
 export type EtatCoffre = 'ouvert' | 'verrouille' | 'sans_protection';
 
+/** Fenêtre de regroupement des écritures, en millisecondes. */
+const DELAI_ECRITURE = 400;
+
 export interface AppActions {
   // Patients
   ajouterPatient: (p: Omit<Patient, 'id' | 'creeLe' | 'majLe'>) => Patient;
@@ -152,18 +155,58 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
 
   const etatCoffre: EtatCoffre = enveloppeVerrouillee ? 'verrouille' : coffre ? 'ouvert' : 'sans_protection';
 
-  // Persistance : en clair, ou scellée dès qu'un coffre est ouvert.
+  /**
+   * Persistance différée.
+   *
+   * Écrire à chaque frappe sérialisait — et, coffre ouvert, rechiffrait — le
+   * dossier entier des dizaines de fois par phrase saisie. Les modifications
+   * rapprochées sont regroupées en une seule écriture, et la dernière est
+   * forcée dès que l'onglet passe en arrière-plan ou se ferme, pour qu'aucune
+   * saisie ne soit perdue.
+   */
+  const ecrire = useCallback(
+    (contenu: AppData) => {
+      if (coffre) void sauvegarderChiffre(contenu, coffre);
+      else sauvegarder(contenu);
+    },
+    [coffre],
+  );
+
+  const enAttente = useRef<AppData | null>(null);
+
   useEffect(() => {
     if (enveloppeVerrouillee) return; // rien à écrire tant que le coffre est fermé
     if (premierRendu.current && !initial) {
       premierRendu.current = false;
     }
-    if (coffre) {
-      void sauvegarderChiffre(data, coffre);
-    } else {
-      sauvegarder(data);
-    }
-  }, [data, coffre, enveloppeVerrouillee, initial]);
+    enAttente.current = data;
+    const minuteur = setTimeout(() => {
+      if (enAttente.current) {
+        ecrire(enAttente.current);
+        enAttente.current = null;
+      }
+    }, DELAI_ECRITURE);
+    return () => clearTimeout(minuteur);
+  }, [data, ecrire, enveloppeVerrouillee, initial]);
+
+  // Filet de sécurité : rien ne doit rester en attente quand l'onglet part.
+  useEffect(() => {
+    const vider = () => {
+      if (!enAttente.current) return;
+      ecrire(enAttente.current);
+      enAttente.current = null;
+    };
+    const surVisibilite = () => {
+      if (document.visibilityState === 'hidden') vider();
+    };
+    window.addEventListener('pagehide', vider);
+    document.addEventListener('visibilitychange', surVisibilite);
+    return () => {
+      window.removeEventListener('pagehide', vider);
+      document.removeEventListener('visibilitychange', surVisibilite);
+      vider();
+    };
+  }, [ecrire]);
 
   // Verrouillage automatique après inactivité.
   useEffect(() => {
