@@ -146,3 +146,27 @@ Tant que la phrase n'est pas fournie, aucune donnée patient n'est en mémoire.
 ## Sur mobile
 
 ![Mobile](20-mobile.png)
+
+---
+
+## Captures cadrées pour la vitrine
+
+Ces deux captures sont cadrées sur un bloc précis plutôt que sur la page
+entière : elles servent la page publique, où une capture de page complète
+réduite devient illisible.
+
+### Arcade complète
+
+Le schéma des deux arcades, avec la palette d'états et la remontée temporelle.
+La capture `03-odontogramme.png` montre le haut du dossier, où l'arcade est
+encore sous la ligne de flottaison.
+
+![Arcade complète](21-arcade-complete.png)
+
+### Dossier médical et profil de risque
+
+Le raisonnement affiché à côté de son résultat : rappel conseillé et sa
+justification, facteurs de risque carieux, six vecteurs parodontaux avec leurs
+valeurs.
+
+![Profil de risque complet](22-profil-de-risque-complet.png)

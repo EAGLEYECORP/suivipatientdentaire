@@ -193,6 +193,46 @@ npm run lint       # vérification TypeScript
 
 ---
 
+## Vitrine publique et application
+
+Le site porte deux documents distincts, voisins dans le même dossier publié :
+
+| Adresse | Document | Rôle |
+| --- | --- | --- |
+| `/` | `index.html` | Vitrine publique : HTML servi tel quel, indexable |
+| `/app.html` (ou `/app`) | `app.html` | Poste de travail clinique, React |
+
+La vitrine est écrite à la main, en HTML et CSS, sans React ni Tailwind. Elle
+pèse une dizaine de kilo-octets de feuille de style et moins d'un kilo-octet de
+script, et elle ne charge pas le paquet applicatif : une personne qui découvre
+le produit n'a aucune raison de télécharger le charting parodontal et la
+visionneuse d'imagerie.
+
+Quelques points qui ne se devinent pas à la lecture des fichiers :
+
+- **`app.html` est un fichier voisin de `index.html`, pas un sous-répertoire.**
+  Toutes les adresses relatives de l'application (`./assets`, `./sw.js`,
+  `./manifest.webmanifest`) continuent donc de résoudre, et le service worker
+  garde la racine pour portée.
+- **L'apparition au défilement est en CSS seul** (`animation-timeline: view()`,
+  sous `@supports`). Une version pilotée en JavaScript laissait toute la page
+  invisible si le script échouait à se charger. Sans le script, et sur les
+  navigateurs sans défilement animé, le contenu s'affiche simplement.
+- **Les anciennes adresses sont rattrapées.** L'application a vécu à la racine :
+  un signet vers `/#/patients` est redirigé vers `/app.html#/patients`, et une
+  application déjà installée, qui démarre en fenêtre autonome, va directement au
+  poste de travail sans passer par la page de présentation.
+- **Le manifeste démarre sur `app.html`** : on installe un outil de travail, pas
+  une page de présentation.
+- **Les visuels de la vitrine ne sont pas précachés.** Le cache hors ligne est
+  réservé au poste clinique ; la page publique se consulte en ligne.
+
+Les captures de la vitrine sont dérivées de `docs/` par
+`node scripts/vitrine-images.mjs`, qui les réduit à la largeur d'affichage et
+les convertit en WebP (environ 420 Ko pour l'ensemble, contre 3 Mo en PNG). Les
+sorties sont versionnées dans `public/vitrine/` : la compilation n'a pas besoin
+de `sharp`.
+
 ## Architecture
 
 ```
@@ -280,12 +320,19 @@ npm run test
   l'application cesse d'être installable sans aucun message d'erreur ;
 - en-têtes de sécurité, dont une **politique de sécurité de contenu stricte** :
   l'application ne chargeant aucune ressource externe, `script-src` reste à
-  `'self'` sans `unsafe-inline`.
+  `'self'` sans `unsafe-inline` ;
+- **indexation différenciée** : `X-Robots-Tag: noindex` ne porte plus sur tout
+  le site mais sur `/app.html` seul, pour que la vitrine soit référençable et
+  que le poste clinique ne le soit pas. `robots.txt` et `sitemap.xml` disent la
+  même chose ;
+- redirection de `/app` vers `/app.html`.
 
 La CSP a été vérifiée dans un navigateur contre l'application compilée : tous
 les écrans, l'import d'images (`blob:`), la génération de vignettes, le service
 worker, l'activation du coffre WebCrypto et l'export de sauvegarde, sans aucune
-violation.
+violation. La vitrine a été éprouvée de la même façon, en bureau et en mobile :
+elle ne porte ni script ni style en ligne, et passe donc la politique sans
+recourir à `unsafe-inline`.
 
 Le chiffrement et le service worker exigent un **contexte sécurisé** : HTTPS est
 indispensable, sinon les deux se désactivent silencieusement.

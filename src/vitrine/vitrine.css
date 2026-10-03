@@ -1,0 +1,832 @@
+/*
+ * Feuille de style de la vitrine publique.
+ *
+ * Écrite à la main plutôt qu'avec Tailwind : la page publique ne doit rien
+ * partager avec la feuille clinique de l'application, ni dépendre de son
+ * bundle. Elle se charge seule, en une requête CSS.
+ *
+ * Deux règles tenues partout dans ce fichier :
+ *   - un seul accent, le bleu de la marque, décliné pour le mode sombre ;
+ *   - deux rayons seulement : 16 px pour les surfaces, 10 px pour les
+ *     contrôles, et le cercle complet pour les pastilles.
+ */
+
+:root {
+  --fond: #ffffff;
+  --fond-doux: #f7f9fc;
+  --fond-appui: #eef3fa;
+  --texte: #0d1626;
+  --texte-doux: #46556c;
+  --texte-tenu: #6b7a91;
+  --filet: #e1e8f1;
+  --filet-appui: #cfdae8;
+  --accent: #1d66f0;
+  --accent-texte: #1550cc;
+  --accent-fond: #eaf1fe;
+  --sur-accent: #ffffff;
+  --ombre: 0 1px 2px rgb(13 22 38 / 0.05), 0 12px 32px -12px rgb(13 22 38 / 0.12);
+  --ombre-forte: 0 2px 4px rgb(13 22 38 / 0.06), 0 28px 64px -20px rgb(13 22 38 / 0.22);
+
+  --r-surface: 16px;
+  --r-controle: 10px;
+
+  --largeur: 1180px;
+  --gouttiere: 20px;
+
+  --sortie: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #0b1220;
+    --fond-doux: #0f1829;
+    --fond-appui: #152138;
+    --texte: #e8eef8;
+    --texte-doux: #a7b6cd;
+    --texte-tenu: #8595ae;
+    --filet: #1d2b45;
+    --filet-appui: #27385a;
+    --accent: #2f78ff;
+    --accent-texte: #7fb0ff;
+    --accent-fond: #13243f;
+    --sur-accent: #ffffff;
+    --ombre: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.5);
+    --ombre-forte: 0 2px 4px rgb(0 0 0 / 0.4), 0 28px 64px -20px rgb(0 0 0 / 0.65);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: 'Inter var', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: var(--accent-texte);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.021em;
+  line-height: 1.12;
+  font-weight: 700;
+}
+
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------- Structure ---------- */
+
+.enveloppe {
+  width: 100%;
+  max-width: var(--largeur);
+  margin-inline: auto;
+  padding-inline: var(--gouttiere);
+}
+
+.section {
+  padding-block: clamp(56px, 8vw, 104px);
+}
+
+.section--douce {
+  background: var(--fond-doux);
+  border-block: 1px solid var(--filet);
+}
+
+.saut-contenu {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--accent);
+  color: var(--sur-accent);
+  padding: 10px 16px;
+  border-radius: var(--r-controle);
+  z-index: 100;
+}
+
+.saut-contenu:focus {
+  left: 12px;
+  top: 12px;
+  text-decoration: none;
+}
+
+/* ---------- En-tête ---------- */
+
+.entete {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--fond) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--filet);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .entete {
+    background: var(--fond);
+  }
+}
+
+.entete__rangee {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--texte);
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
+.marque:hover {
+  text-decoration: none;
+}
+
+.marque__sceau {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--sur-accent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.entete__liens {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  font-size: 14.5px;
+}
+
+.entete__liens a {
+  color: var(--texte-doux);
+  white-space: nowrap;
+}
+
+.entete__liens a:hover {
+  color: var(--texte);
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .entete__liens {
+    display: none;
+  }
+}
+
+/*
+ * Sous 470 px, le nom écrit et le bouton d'accès ne tiennent plus sur une
+ * ligne de 68 px : le mot-symbole cède la place, le sceau reste.
+ */
+@media (max-width: 470px) {
+  .marque__texte {
+    display: none;
+  }
+
+  .entete__rangee {
+    gap: 12px;
+  }
+
+  .entete .bouton {
+    padding: 10px 15px;
+    font-size: 14.5px;
+  }
+}
+
+/* ---------- Boutons ---------- */
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 11px 19px;
+  border-radius: var(--r-controle);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.14s var(--sortie),
+    background-color 0.18s var(--sortie),
+    border-color 0.18s var(--sortie);
+}
+
+.bouton:hover {
+  text-decoration: none;
+}
+
+.bouton:active {
+  transform: translateY(1px);
+}
+
+.bouton--plein {
+  background: var(--accent);
+  color: var(--sur-accent);
+  box-shadow: var(--ombre);
+}
+
+.bouton--plein:hover {
+  background: color-mix(in srgb, var(--accent) 88%, #000);
+}
+
+.bouton--trait {
+  background: var(--fond);
+  color: var(--texte);
+  border-color: var(--filet-appui);
+}
+
+.bouton--trait:hover {
+  background: var(--fond-appui);
+  border-color: var(--texte-tenu);
+}
+
+.bouton--grand {
+  font-size: 16px;
+  padding: 14px 24px;
+}
+
+/* ---------- Héros ---------- */
+
+.heros {
+  padding-top: clamp(40px, 6vw, 84px);
+  padding-bottom: clamp(48px, 7vw, 88px);
+  overflow: hidden;
+}
+
+.heros__grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+}
+
+.heros__titre {
+  font-size: clamp(2.05rem, 4.4vw, 3.05rem);
+  max-width: 19ch;
+}
+
+.heros__accroche {
+  margin-top: 20px;
+  font-size: clamp(1.02rem, 1.6vw, 1.16rem);
+  color: var(--texte-doux);
+  max-width: 46ch;
+}
+
+.heros__actions {
+  margin-top: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.heros__visuel {
+  position: relative;
+  border-radius: var(--r-surface);
+  border: 1px solid var(--filet);
+  background: var(--fond-doux);
+  box-shadow: var(--ombre-forte);
+  overflow: hidden;
+}
+
+.heros__visuel img {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .heros__grille {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .heros__accroche {
+    max-width: none;
+  }
+}
+
+/* Deux boutons de largeurs différentes empilés font un bord gauche net et un
+   bord droit en escalier : sur un écran étroit, ils prennent toute la laize. */
+@media (max-width: 520px) {
+  .heros__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .heros__actions .bouton {
+    width: 100%;
+  }
+}
+
+/* ---------- Bandeau de chiffres ---------- */
+
+.chiffres {
+  border-top: 1px solid var(--filet);
+  padding-block: clamp(28px, 4vw, 40px);
+}
+
+.chiffres__grille {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--filet);
+}
+
+.chiffre {
+  background: var(--fond);
+  padding: 4px clamp(12px, 2vw, 26px);
+}
+
+.chiffre:first-child {
+  padding-left: 0;
+}
+
+.chiffre__valeur {
+  font-size: clamp(1.35rem, 2.3vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.chiffre__texte {
+  margin-top: 2px;
+  font-size: 13.5px;
+  color: var(--texte-tenu);
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .chiffres__grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    background: transparent;
+  }
+
+  .chiffre,
+  .chiffre:first-child {
+    padding: 0;
+  }
+}
+
+/* ---------- Titres de section ---------- */
+
+.sur-titre {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-texte);
+  margin-bottom: 14px;
+}
+
+.section__titre {
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  max-width: 24ch;
+}
+
+.section__texte {
+  margin-top: 16px;
+  color: var(--texte-doux);
+  max-width: 62ch;
+  font-size: 1.02rem;
+}
+
+/* ---------- Pleine largeur avec capture ---------- */
+
+.vedette__tete {
+  max-width: 760px;
+}
+
+.vedette__cadre {
+  margin-top: clamp(32px, 4vw, 48px);
+  border-radius: var(--r-surface);
+  border: 1px solid var(--filet);
+  background: var(--fond);
+  box-shadow: var(--ombre-forte);
+  overflow: hidden;
+}
+
+.vedette__notes {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.note__titre {
+  font-size: 15.5px;
+  font-weight: 650;
+  margin-bottom: 5px;
+}
+
+.note__texte {
+  font-size: 14.5px;
+  color: var(--texte-doux);
+  line-height: 1.55;
+}
+
+@media (max-width: 820px) {
+  .vedette__notes {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* ---------- Grille de capacités ---------- */
+
+.capacites {
+  margin-top: clamp(32px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tuile {
+  border: 1px solid var(--filet);
+  border-radius: var(--r-surface);
+  background: var(--fond);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tuile--large {
+  grid-column: span 4;
+}
+
+.tuile--etroite {
+  grid-column: span 2;
+}
+
+.tuile--moitie {
+  grid-column: span 3;
+}
+
+.tuile--teintee {
+  background: linear-gradient(165deg, var(--accent-fond), var(--fond) 72%);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--filet));
+}
+
+.tuile__titre {
+  font-size: 1.12rem;
+  font-weight: 680;
+  letter-spacing: -0.012em;
+}
+
+.tuile__texte {
+  margin-top: 9px;
+  font-size: 14.5px;
+  color: var(--texte-doux);
+  line-height: 1.58;
+}
+
+.tuile__capture {
+  margin-top: 22px;
+  margin-inline: -26px;
+  margin-bottom: -26px;
+  border-top: 1px solid var(--filet);
+}
+
+.tuile__capture img {
+  width: 100%;
+}
+
+.tuile__chiffre {
+  margin-top: auto;
+  padding-top: 22px;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  color: var(--accent-texte);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tuile__legende {
+  font-size: 13px;
+  color: var(--texte-tenu);
+  margin-top: 6px;
+}
+
+@media (max-width: 980px) {
+  .capacites {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tuile--large,
+  .tuile--etroite,
+  .tuile--moitie {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .capacites {
+    grid-template-columns: 1fr;
+  }
+
+  .tuile {
+    padding: 22px;
+  }
+
+  .tuile__capture {
+    margin-inline: -22px;
+    margin-bottom: -22px;
+  }
+}
+
+/* ---------- Bloc confidentialité ---------- */
+
+.coffre__grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(32px, 5vw, 60px);
+  align-items: center;
+}
+
+.coffre__cadre {
+  border-radius: var(--r-surface);
+  border: 1px solid var(--filet);
+  box-shadow: var(--ombre-forte);
+  overflow: hidden;
+}
+
+.liste-faits {
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.liste-faits li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  align-items: start;
+  font-size: 15px;
+  color: var(--texte-doux);
+}
+
+.liste-faits svg {
+  color: var(--accent);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.liste-faits strong {
+  color: var(--texte);
+  font-weight: 620;
+}
+
+@media (max-width: 900px) {
+  .coffre__grille {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .coffre__cadre {
+    order: -1;
+  }
+}
+
+/* ---------- Mise en route ---------- */
+
+.etapes {
+  margin-top: clamp(32px, 4vw, 44px);
+  display: grid;
+  gap: 0;
+}
+
+.etape {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 22px;
+  padding-block: 26px;
+  border-top: 1px solid var(--filet);
+  align-items: start;
+}
+
+.etape:last-child {
+  border-bottom: 1px solid var(--filet);
+}
+
+.etape__sceau {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--accent-fond);
+  color: var(--accent-texte);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.etape__titre {
+  font-size: 1.14rem;
+  font-weight: 670;
+}
+
+.etape__texte {
+  margin-top: 7px;
+  color: var(--texte-doux);
+  font-size: 15px;
+  max-width: 68ch;
+}
+
+@media (max-width: 640px) {
+  .etape {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* ---------- Limites ---------- */
+
+.limites {
+  margin-top: clamp(28px, 4vw, 40px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.limite {
+  border: 1px solid var(--filet);
+  border-left: 3px solid var(--filet-appui);
+  border-radius: var(--r-controle);
+  background: var(--fond);
+  padding: 20px 22px;
+}
+
+.limite__titre {
+  font-size: 15.5px;
+  font-weight: 650;
+  margin-bottom: 6px;
+}
+
+.limite__texte {
+  font-size: 14.5px;
+  color: var(--texte-doux);
+  line-height: 1.58;
+}
+
+@media (max-width: 760px) {
+  .limites {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Appel final ---------- */
+
+.final {
+  text-align: center;
+  padding-block: clamp(60px, 8vw, 100px);
+}
+
+.final__titre {
+  font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+  margin-inline: auto;
+  max-width: 22ch;
+}
+
+.final__texte {
+  margin: 18px auto 0;
+  color: var(--texte-doux);
+  max-width: 54ch;
+}
+
+.final__actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---------- Pied ---------- */
+
+.pied {
+  border-top: 1px solid var(--filet);
+  padding-block: 36px;
+  background: var(--fond-doux);
+}
+
+.pied__rangee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 32px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--texte-tenu);
+}
+
+.pied__liens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+
+.pied__liens a {
+  color: var(--texte-doux);
+}
+
+/* ---------- Apparition au défilement ---------- */
+
+/*
+ * L'apparition est pilotée par la position de défilement, en CSS seul.
+ *
+ * La version précédente masquait les blocs puis les révélait en JavaScript :
+ * si le script échouait à se charger, toute la page sous le héros restait
+ * invisible. Ici, le masquage n'existe que si le navigateur sait animer sur
+ * le défilement. Partout ailleurs, et sans JavaScript, le contenu s'affiche
+ * normalement.
+ */
+@keyframes apparition {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .apparait {
+      animation: apparition linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 46%;
+    }
+  }
+}
+
+/* À l'impression, rien ne défile : tout doit être visible. */
+@media print {
+  .apparait {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

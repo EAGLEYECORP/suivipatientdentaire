@@ -3,7 +3,7 @@
   "short_name": "Suivi Dentaire",
   "description": "Gestion de cabinet dentaire : schéma dentaire anatomique, charting parodontal, imagerie, plans de traitement et pilotage — hors ligne et chiffré.",
   "lang": "fr",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

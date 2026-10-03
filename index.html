@@ -2,19 +2,532 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <meta name="theme-color" content="#1d66f0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Suivi Dentaire" />
-    <link rel="apple-touch-icon" href="./icone-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Suivi Patient Dentaire — gestion de cabinet dentaire : schéma dentaire interactif, dossiers, plans de traitement, rendez-vous et facturation." />
-    <title>Suivi Patient Dentaire</title>
+    <title>Suivi Patient Dentaire : le dossier qui reste au cabinet</title>
+    <meta
+      name="description"
+      content="Logiciel de cabinet dentaire : schéma dentaire anatomique, charting parodontal, plans de traitement, facturation CCAM et NGAP. Chiffré sur votre poste, utilisable sans réseau."
+    />
+    <link rel="canonical" href="https://suividentaire.eagleyecorp.fr/" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#1d66f0" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./icone-192.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Suivi Patient Dentaire" />
+    <meta property="og:title" content="Le dossier dentaire qui reste au cabinet" />
+    <meta
+      property="og:description"
+      content="Schéma dentaire anatomique, charting parodontal, devis et facturation CCAM ou NGAP. Chiffré sur le poste, sans serveur et sans abonnement."
+    />
+    <meta property="og:url" content="https://suividentaire.eagleyecorp.fr/" />
+    <meta property="og:image" content="https://suividentaire.eagleyecorp.fr/vitrine/partage.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Le préchargement du visuel du héros tient la plus grande image de la page. -->
+    <link rel="preload" as="image" href="./vitrine/odontogramme.webp" fetchpriority="high" />
+
+    <script type="module" src="/src/vitrine/vitrine.ts"></script>
+    <link rel="stylesheet" href="/src/vitrine/vitrine.css" />
   </head>
+
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="saut-contenu" href="#contenu">Aller au contenu</a>
+
+    <header class="entete">
+      <div class="enveloppe entete__rangee">
+        <a class="marque" href="./">
+          <span class="marque__sceau" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v10H5V10Zm7 4v2"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span class="marque__texte">Suivi Patient Dentaire</span>
+        </a>
+
+        <nav class="entete__liens" aria-label="Sections de la page">
+          <a href="#clinique">Clinique</a>
+          <a href="#capacites">Capacités</a>
+          <a href="#confidentialite">Confidentialité</a>
+          <a href="#limites">Limites</a>
+        </nav>
+
+        <a class="bouton bouton--plein" href="./app.html" data-libelle-retour="Reprendre le suivi">
+          Ouvrir l’application
+        </a>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <!-- Héros : composition dissymétrique, texte à gauche, capture réelle à droite. -->
+      <section class="heros">
+        <div class="enveloppe heros__grille">
+          <div>
+            <h1 class="heros__titre">Le dossier dentaire reste au cabinet.</h1>
+            <p class="heros__accroche">
+              Schéma dentaire anatomique, charting parodontal, plans de traitement et facturation.
+              Chiffré sur votre poste, utilisable sans réseau.
+            </p>
+            <div class="heros__actions">
+              <a
+                class="bouton bouton--plein bouton--grand"
+                href="./app.html"
+                data-libelle-retour="Reprendre le suivi"
+              >
+                Ouvrir l’application
+              </a>
+              <a class="bouton bouton--trait bouton--grand" href="#capacites">Voir les écrans</a>
+            </div>
+          </div>
+
+          <div class="heros__visuel">
+            <img
+              src="./vitrine/odontogramme.webp"
+              width="1120"
+              height="1221"
+              alt="Schéma dentaire des deux arcades en numérotation FDI : chaque dent est dessinée à ses dimensions réelles et porte son état clinique en couleur."
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Chiffres vérifiables, en filets plutôt qu'en cartes. -->
+      <section class="chiffres">
+        <div class="enveloppe">
+          <div class="chiffres__grille">
+            <div class="chiffre">
+              <div class="chiffre__valeur">168</div>
+              <p class="chiffre__texte">tests automatisés sur le diagnostic, le chiffrement et les calculs</p>
+            </div>
+            <div class="chiffre">
+              <div class="chiffre__valeur">AES-256</div>
+              <p class="chiffre__texte">en mode GCM, clé dérivée par PBKDF2 en 310 000 itérations</p>
+            </div>
+            <div class="chiffre">
+              <div class="chiffre__valeur">Aucun serveur</div>
+              <p class="chiffre__texte">pas un appel réseau à l’exécution, pas de compte à créer</p>
+            </div>
+            <div class="chiffre">
+              <div class="chiffre__valeur">2 pays</div>
+              <p class="chiffre__texte">nomenclature CCAM en France, NGAP et TNR au Maroc</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vedette pleine largeur : l'aide à la décision. -->
+      <section class="section section--douce" id="clinique">
+        <div class="enveloppe">
+          <div class="vedette__tete apparait">
+            <h2 class="section__titre">Le diagnostic, et le raisonnement qui l’a produit.</h2>
+            <p class="section__texte">
+              Chaque alerte affiche la règle qui l’a déclenchée et les dents concernées. Un
+              diagnostic que vous ne pouvez pas interroger est un diagnostic que vous ne pouvez pas
+              défendre devant un patient.
+            </p>
+          </div>
+
+          <div class="vedette__cadre apparait">
+            <img
+              src="./vitrine/aide-decision.webp"
+              width="1440"
+              height="772"
+              alt="Dossier médical et profil de risque : rappel conseillé à trois mois justifié par le risque parodontal, facteurs de risque carieux détaillés, et les six vecteurs parodontaux avec leurs valeurs."
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          <div class="vedette__notes">
+            <div class="apparait">
+              <h3 class="note__titre">Classification 2018</h3>
+              <p class="note__texte">
+                Stade, grade, étendue et stabilité selon la classification AAP et EFP de 2018. La
+                perte d’attache est calculée en retirant le sillon physiologique, pour qu’un sulcus
+                sain de 3 mm ne soit jamais lu comme une parodontite.
+              </p>
+            </div>
+            <div class="apparait">
+              <h3 class="note__titre">Risque individuel</h3>
+              <p class="note__texte">
+                Risque carieux coté selon CAMBRA et profil parodontal à six vecteurs d’après Lang et
+                Tonetti. Les vecteurs restent visibles séparément : vous voyez lequel pèse.
+              </p>
+            </div>
+            <div class="apparait">
+              <h3 class="note__titre">Rappel conseillé</h3>
+              <p class="note__texte">
+                L’intervalle de rappel découle du profil de risque, et non d’un délai uniforme
+                appliqué à toute la patientèle.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grille de capacités, tuiles de tailles inégales. -->
+      <section class="section" id="capacites">
+        <div class="enveloppe">
+          <div class="apparait">
+            <span class="sur-titre">Ce que fait le logiciel</span>
+            <h2 class="section__titre">Du sondage parodontal au reste à charge.</h2>
+          </div>
+
+          <div class="capacites">
+            <article class="tuile tuile--large apparait">
+              <h3 class="tuile__titre">Charting parodontal, six sites par dent</h3>
+              <p class="tuile__texte">
+                Profondeur de poche, récession, saignement, plaque, mobilité et atteinte
+                inter-radiculaire. Les indices de plaque et de saignement se recalculent à la
+                saisie, et les dents absentes sortent du calcul.
+              </p>
+              <div class="tuile__capture">
+                <img
+                  src="./vitrine/parodontal.webp"
+                  width="1440"
+                  height="810"
+                  alt="Tableau de charting parodontal : une colonne par dent, six sites de sondage par dent, avec les indices de plaque et de saignement calculés en tête."
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </article>
+
+            <article class="tuile tuile--etroite tuile--teintee apparait">
+              <h3 class="tuile__titre">Facturation des deux côtés de la Méditerranée</h3>
+              <p class="tuile__texte">
+                Choisissez la nomenclature du cabinet : la monnaie, les actes et les régimes
+                suivent. Le remboursement se calcule partout de la même façon, tarif de référence
+                multiplié par le taux du régime.
+              </p>
+              <div class="tuile__chiffre">70 / 80 %</div>
+              <p class="tuile__legende">Taux CNSS et CNOPS appliqués au TNR marocain</p>
+            </article>
+
+            <article class="tuile tuile--etroite apparait">
+              <h3 class="tuile__titre">Radios chiffrées sur le poste</h3>
+              <p class="tuile__texte">
+                Les clichés sont chiffrés avec la même clé que le dossier, et la visionneuse les
+                compare côte à côte.
+              </p>
+              <div class="tuile__capture">
+                <img
+                  src="./vitrine/imagerie.webp"
+                  width="1100"
+                  height="749"
+                  alt="Visionneuse d’imagerie affichant deux radiographies côte à côte pour comparaison."
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </article>
+
+            <article class="tuile tuile--large apparait">
+              <h3 class="tuile__titre">Devis en variantes, reste à charge annoncé</h3>
+              <p class="tuile__texte">
+                Présentez deux ou trois scénarios thérapeutiques chiffrés dans la même consultation.
+                Le patient voit le total, la part remboursée et ce qu’il paie, avant de décider.
+              </p>
+              <div class="tuile__capture">
+                <img
+                  src="./vitrine/devis.webp"
+                  width="1100"
+                  height="749"
+                  alt="Devis présentant plusieurs variantes de plan de traitement, chacune avec son total, son remboursement estimé et son reste à charge."
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mémoire du dossier : composition inversée par rapport au héros. -->
+      <section class="section section--douce">
+        <div class="enveloppe coffre__grille">
+          <div class="apparait">
+            <h2 class="section__titre">Le dossier a une mémoire, pas seulement un état.</h2>
+            <p class="section__texte">
+              Le magasin est un journal en ajout seul : rien ne s’écrase, rien ne se purge. Ce n’est
+              pas une option d’audit ajoutée par-dessus, c’est la façon dont les données sont
+              écrites.
+            </p>
+            <ul class="liste-faits">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>Remontée à une date.</strong> Revoyez la bouche telle qu’elle était lors
+                  d’une consultation passée.
+                </span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>Biographie d’une dent.</strong> Tous les états traversés par la 36, avec
+                  leurs dates, en un clic.
+                </span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>Praticien et horodatage</strong> sur chaque écriture du journal clinique.
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="coffre__cadre apparait">
+            <img
+              src="./vitrine/remontee.webp"
+              width="1100"
+              height="749"
+              alt="Schéma dentaire affiché à une date antérieure, avec le curseur de remontée temporelle positionné sur une consultation passée."
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Confidentialité : capture à gauche cette fois. -->
+      <section class="section" id="confidentialite">
+        <div class="enveloppe coffre__grille">
+          <div class="coffre__cadre apparait">
+            <img
+              src="./vitrine/coffre.webp"
+              width="1100"
+              height="749"
+              alt="Écran de déverrouillage demandant la phrase secrète du cabinet, avec la date du dernier scellement du coffre."
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          <div class="apparait">
+            <h2 class="section__titre">Les dossiers ne partent nulle part.</h2>
+            <p class="section__texte">
+              Il n’y a pas de serveur à qui faire confiance, parce qu’il n’y a pas de serveur. Les
+              données vivent sur le poste du cabinet, chiffrées, et l’application ne passe aucun
+              appel réseau pendant son fonctionnement.
+            </p>
+            <ul class="liste-faits">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>AES-256-GCM</strong>, clé dérivée de votre phrase secrète par
+                  PBKDF2-SHA-256 en 310 000 itérations.
+                </span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>La phrase secrète n’est stockée nulle part.</strong> Personne ne peut vous
+                  la redonner, nous compris.
+                </span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="m5 13 4 4L19 7"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  <strong>Hors ligne par construction.</strong> Une coupure de connexion n’arrête
+                  pas la consultation.
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mise en route : famille de mise en page distincte, en filets. -->
+      <section class="section section--douce">
+        <div class="enveloppe">
+          <div class="apparait">
+            <h2 class="section__titre">Trois minutes avant le premier patient.</h2>
+          </div>
+
+          <div class="etapes">
+            <div class="etape apparait">
+              <span class="etape__sceau" aria-hidden="true">1</span>
+              <div>
+                <h3 class="etape__titre">Ouvrez l’application</h3>
+                <p class="etape__texte">
+                  Rien à installer pour essayer. Le cabinet de démonstration contient déjà des
+                  dossiers, un charting et un plan de traitement, pour que vous puissiez juger sur
+                  des données plutôt que sur une page vide.
+                </p>
+              </div>
+            </div>
+
+            <div class="etape apparait">
+              <span class="etape__sceau" aria-hidden="true">2</span>
+              <div>
+                <h3 class="etape__titre">Scellez le coffre</h3>
+                <p class="etape__texte">
+                  Choisissez la phrase secrète du cabinet dans les paramètres. À partir de là, les
+                  dossiers et les radios sont chiffrés sur le disque, et il faut la phrase pour les
+                  rouvrir.
+                </p>
+              </div>
+            </div>
+
+            <div class="etape apparait">
+              <span class="etape__sceau" aria-hidden="true">3</span>
+              <div>
+                <h3 class="etape__titre">Réglez la nomenclature</h3>
+                <p class="etape__texte">
+                  CCAM pour la France, NGAP et TNR pour le Maroc. La monnaie, les actes et les
+                  régimes de remboursement suivent le choix, et les dossiers existants sont
+                  rebasculés en un clic.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Limites assumées : un clinicien se décide mieux avec elles qu'avec du silence. -->
+      <section class="section" id="limites">
+        <div class="enveloppe">
+          <div class="apparait">
+            <span class="sur-titre">À savoir avant de vous décider</span>
+            <h2 class="section__titre">Ce que ce logiciel ne fait pas encore.</h2>
+            <p class="section__texte">
+              Un outil clinique qui cache ses angles morts vous les fait découvrir devant un
+              patient. Voici les nôtres.
+            </p>
+          </div>
+
+          <div class="limites">
+            <div class="limite apparait">
+              <h3 class="limite__titre">Les catalogues d’actes restent à confirmer</h3>
+              <p class="limite__texte">
+                Aucune des deux nomenclatures n’a été confrontée à sa source officielle. Le jeu
+                marocain est partiel et provient de sources secondaires, les documents de l’ANAM et
+                de la CNOPS n’étant pas consultables. À vérifier avant tout usage de facturation :
+                l’application le signale dans ses paramètres.
+              </p>
+            </div>
+
+            <div class="limite apparait">
+              <h3 class="limite__titre">Pas de télétransmission</h3>
+              <p class="limite__texte">
+                Ni feuille de soins électronique en France, ni formulaire de remboursement AMO au
+                Maroc. Les demandes partent encore à la main.
+              </p>
+            </div>
+
+            <div class="limite apparait">
+              <h3 class="limite__titre">Un seul poste</h3>
+              <p class="limite__texte">
+                Pas de synchronisation entre postes ni de comptes utilisateurs. Le praticien actif
+                signe le journal mais n’est pas authentifié. Cela convient à un cabinet solo, moins
+                à plusieurs fauteuils.
+              </p>
+            </div>
+
+            <div class="limite apparait">
+              <h3 class="limite__titre">Aucune heure de terrain</h3>
+              <p class="limite__texte">
+                Le logiciel n’a pas encore servi sur un patient réel. Les 168 tests couvrent le
+                diagnostic, le chiffrement et les calculs, mais ils ne remplacent pas l’usage en
+                cabinet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="final section--douce">
+        <div class="enveloppe">
+          <h2 class="final__titre">Jugez-le sur un charting, pas sur une promesse.</h2>
+          <p class="final__texte">
+            Le cabinet de démonstration est déjà peuplé. Ouvrez un dossier, sondez une dent, sortez
+            un devis.
+          </p>
+          <div class="final__actions">
+            <a
+              class="bouton bouton--plein bouton--grand"
+              href="./app.html"
+              data-libelle-retour="Reprendre le suivi"
+            >
+              Ouvrir l’application
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pied">
+      <div class="enveloppe pied__rangee">
+        <span>© <span data-annee>2026</span> Suivi Patient Dentaire</span>
+        <nav class="pied__liens" aria-label="Liens de pied de page">
+          <a href="#clinique">Clinique</a>
+          <a href="#capacites">Capacités</a>
+          <a href="#confidentialite">Confidentialité</a>
+          <a href="#limites">Limites</a>
+          <a href="./app.html">Application</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

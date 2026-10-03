@@ -8,7 +8,17 @@
  * ligne.
  */
 const CACHE = 'suivi-dentaire-v1';
-const COQUILLE = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
+const COQUILLE = ['./', './index.html', './app.html', './manifest.webmanifest', './favicon.svg'];
+
+/*
+ * Le site porte deux documents : la vitrine publique à la racine et le poste
+ * de travail sur app.html. Une navigation hors ligne doit retomber sur le bon
+ * document, sinon « / » sert l'application et « /app.html » sert la page de
+ * présentation.
+ */
+function coquilleDe(url) {
+  return url.pathname.endsWith('/app.html') ? './app.html' : './index.html';
+}
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -37,14 +47,19 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;
 
   if (requete.mode === 'navigate') {
+    const coquille = coquilleDe(url);
     e.respondWith(
       fetch(requete)
         .then((reponse) => {
-          const copie = reponse.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copie));
+          // Seules les réponses valides remplacent la coquille en cache : une
+          // page d'erreur mise en cache condamnerait le hors-ligne.
+          if (reponse.ok) {
+            const copie = reponse.clone();
+            caches.open(CACHE).then((c) => c.put(coquille, copie));
+          }
           return reponse;
         })
-        .catch(() => caches.match('./index.html').then((r) => r ?? caches.match('./'))),
+        .catch(() => caches.match(coquille).then((r) => r ?? caches.match('./'))),
     );
     return;
   }

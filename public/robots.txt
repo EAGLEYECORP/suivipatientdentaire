@@ -1,0 +1,7 @@
+# La vitrine est publique et indexable. Le poste de travail clinique ne l'est
+# pas : il ne contient aucune donnée publique et n'a rien à faire dans un
+# index de moteur de recherche.
+User-agent: *
+Disallow: /app.html
+
+Sitemap: https://suividentaire.eagleyecorp.fr/sitemap.xml

@@ -40,15 +40,35 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
+  for = "/app.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    # Le poste de travail clinique n'a rien à faire dans un index : la vitrine
+    # est la seule page publique. L'en-tête est posé ici et non sur "/*".
+    X-Robots-Tag = "noindex, nofollow"
+
+# Les visuels de la vitrine ne portent pas de hachage dans leur nom : cache
+# d'une journée, puis revalidation en arrière-plan.
+[[headers]]
+  for = "/vitrine/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "no-referrer"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
-    # Outil clinique : pas d'indexation par les moteurs de recherche.
-    X-Robots-Tag = "noindex, nofollow"
     # 'unsafe-inline' n'est requis que pour les attributs style de React.
     # Aucun script inline n'est émis par la compilation : script-src reste strict.
     # blob: couvre l'affichage des radios chargées depuis IndexedDB.
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+
+# Adresse courte : /app mène au poste de travail.
+[[redirects]]
+  from = "/app"
+  to = "/app.html"
+  status = 301
+  force = true
