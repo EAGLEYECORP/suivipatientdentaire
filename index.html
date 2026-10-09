@@ -60,6 +60,7 @@
           <a href="#capacites">Capacités</a>
           <a href="#confidentialite">Confidentialité</a>
           <a href="#limites">Limites</a>
+          <a href="#tarif">Tarif</a>
         </nav>
 
         <a class="bouton bouton--plein" href="./app.html" data-libelle-retour="Reprendre le suivi">
@@ -497,6 +498,206 @@
         </div>
       </section>
 
+      <!-- Tarif : licence définitive, maintenance facultative. -->
+      <section class="section section--douce" id="tarif">
+        <div class="enveloppe">
+          <div class="apparait tarif__tete">
+            <span class="sur-titre">Tarif</span>
+            <h2 class="section__titre">Payé une fois. Pas tous les mois.</h2>
+            <p class="section__texte">
+              Il n’y a pas de serveur à faire tourner, donc pas de coût récurrent à vous
+              répercuter. Vous achetez une licence, elle ne s’éteint pas.
+            </p>
+          </div>
+
+          <div class="offres">
+            <article class="offre offre--principale apparait">
+              <h3 class="offre__nom">Licence du cabinet</h3>
+              <p class="offre__prix">
+                <span class="offre__montant">5 000</span>
+                <span class="offre__devise">DH</span>
+              </p>
+              <p class="offre__cadence">une seule fois, environ 460 €</p>
+              <ul class="offre__liste">
+                <li>Un poste de travail, sans limite de dossiers ni de praticiens</li>
+                <li>Toutes les fonctions de cette page, sans palier ni option</li>
+                <li>Première année de mises à jour comprise</li>
+                <li>Vos données restent sur votre poste, exportables à tout moment</li>
+              </ul>
+              <a class="bouton bouton--plein bouton--grand offre__action" href="./app.html">
+                Essayer avant d’acheter
+              </a>
+              <p class="offre__note">
+                Le cabinet de démonstration est ouvert, sans compte ni carte bancaire.
+              </p>
+            </article>
+
+            <article class="offre apparait">
+              <h3 class="offre__nom">Maintenance annuelle</h3>
+              <p class="offre__prix">
+                <span class="offre__montant">800</span>
+                <span class="offre__devise">DH</span>
+              </p>
+              <p class="offre__cadence">par an, facultative, environ 75 €</p>
+              <ul class="offre__liste">
+                <li>Mises à jour des nomenclatures : le TNR date de 2006 et sera revalorisé</li>
+                <li>Corrections et nouvelles fonctions</li>
+                <li>Assistance par écrit</li>
+              </ul>
+              <p class="offre__appui">
+                <strong>Si vous l’arrêtez, le logiciel continue de fonctionner.</strong> Vous gardez
+                vos dossiers, vos exports et l’usage complet de la version installée. Vous cessez
+                seulement de recevoir les suivantes.
+              </p>
+            </article>
+          </div>
+
+          <!-- Calculateur : le visiteur fournit son propre chiffre, nous n'en inventons aucun. -->
+          <div class="calcul apparait">
+            <div class="calcul__saisie">
+              <h3 class="calcul__titre">Comparez à ce que vous payez aujourd’hui</h3>
+              <p class="calcul__texte">
+                La plupart des logiciels de cabinet se louent au mois. Entrez le vôtre, le calcul se
+                fait sur cinq ans, maintenance comprise de notre côté.
+              </p>
+              <label class="calcul__etiquette" for="abonnement">
+                Votre abonnement actuel, en dirhams par mois
+              </label>
+              <div class="calcul__champ">
+                <input
+                  class="calcul__entree"
+                  id="abonnement"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="100000"
+                  step="10"
+                  value="200"
+                />
+                <span class="calcul__unite">DH / mois</span>
+              </div>
+              <p class="calcul__aide" id="abonnement-aide">
+                Si vous n’avez pas de logiciel, laissez à zéro : la comparaison n’a pas lieu d’être.
+              </p>
+            </div>
+
+            <div class="calcul__sortie" role="status" aria-live="polite">
+              <div class="calcul__ligne">
+                <span class="calcul__cle">Vous, sur cinq ans</span>
+                <span class="calcul__valeur" data-calcul="eux">12 000 DH</span>
+              </div>
+              <div class="calcul__ligne">
+                <span class="calcul__cle">Suivi Patient Dentaire, maintenance comprise</span>
+                <span class="calcul__valeur" data-calcul="nous">8 200 DH</span>
+              </div>
+              <div class="calcul__ligne calcul__ligne--total">
+                <span class="calcul__cle">Écart</span>
+                <span class="calcul__valeur calcul__valeur--fort" data-calcul="ecart">3 800 DH</span>
+              </div>
+              <p class="calcul__verdict" data-calcul="verdict">
+                Vous rentrez dans vos frais au bout de 33 mois.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Questions fréquentes : les objections réelles, pas des questions de complaisance. -->
+      <section class="section" id="questions">
+        <div class="enveloppe">
+          <div class="apparait">
+            <h2 class="section__titre">Les questions qu’on nous pose.</h2>
+          </div>
+
+          <div class="questions apparait">
+            <details class="question">
+              <summary class="question__titre">
+                Si j’arrête la maintenance, je perds le logiciel ?
+              </summary>
+              <div class="question__corps">
+                <p>
+                  Non. La licence est définitive. Sans maintenance, votre version continue de
+                  fonctionner, vos dossiers restent lisibles et exportables, et rien ne se bloque à
+                  une date d’échéance. Vous ne recevez simplement plus les mises à jour.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Où sont mes données, et à qui appartiennent-elles ?</summary>
+              <div class="question__corps">
+                <p>
+                  Sur le disque de votre poste, chiffrées par votre phrase secrète. Elles ne passent
+                  par aucun serveur, parce qu’il n’y en a pas. Vous pouvez exporter l’intégralité du
+                  dossier à tout moment, dans un format lisible, sans nous le demander.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Et si je perds ma phrase secrète ?</summary>
+              <div class="question__corps">
+                <p>
+                  Les données sont définitivement perdues. Personne ne peut vous les rendre, nous
+                  compris : la phrase n’est stockée nulle part, c’est précisément ce qui rend le
+                  chiffrement utile. Conservez-la hors du poste, et faites des exports réguliers.
+                  Nous préférons vous le dire avant l’achat plutôt qu’après l’incident.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Puis-je l’utiliser sur plusieurs fauteuils ?</summary>
+              <div class="question__corps">
+                <p>
+                  Pas aujourd’hui. L’application est monoposte : il n’y a ni synchronisation entre
+                  postes ni comptes utilisateurs. Elle convient à un cabinet qui travaille sur un
+                  seul ordinateur. Pour plusieurs fauteuils reliés, d’autres solutions font cela
+                  mieux que nous pour l’instant.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Puis-je facturer la CNSS ou la CNOPS avec ?</summary>
+              <div class="question__corps">
+                <p>
+                  Le logiciel calcule le remboursement attendu à partir du tarif de référence et du
+                  taux du régime, et imprime le devis et la facture. Mais il ne télétransmet pas, et
+                  le catalogue d’actes marocain n’a pas encore été confronté au document officiel de
+                  l’ANAM. Vérifiez les codes et les bases avant de vous en servir pour une demande
+                  de remboursement : l’application vous le rappelle dans ses paramètres.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Pourquoi pas d’abonnement, comme tout le monde ?</summary>
+              <div class="question__corps">
+                <p>
+                  Parce qu’un abonnement finance d’abord des serveurs, et que nous n’en avons aucun.
+                  Vous faire payer tous les mois pour une application qui tourne sur votre propre
+                  machine serait difficile à justifier. La maintenance annuelle, elle, finance un
+                  travail réel : suivre les nomenclatures et corriger ce qui doit l’être.
+                </p>
+              </div>
+            </details>
+
+            <details class="question">
+              <summary class="question__titre">Combien de cabinets l’utilisent déjà ?</summary>
+              <div class="question__corps">
+                <p>
+                  Aucun. Le logiciel n’a pas encore servi sur un patient réel. Les 168 tests
+                  automatisés couvrent le diagnostic parodontal, le chiffrement et les calculs de
+                  remboursement, mais ils ne remplacent pas l’usage en cabinet. Vous seriez parmi
+                  les premiers, et nous préférons que vous le sachiez avant de payer.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
       <section class="final section--douce">
         <div class="enveloppe">
           <h2 class="final__titre">Jugez-le sur un charting, pas sur une promesse.</h2>
@@ -525,6 +726,8 @@
           <a href="#capacites">Capacités</a>
           <a href="#confidentialite">Confidentialité</a>
           <a href="#limites">Limites</a>
+          <a href="#tarif">Tarif</a>
+          <a href="#questions">Questions</a>
           <a href="./app.html">Application</a>
         </nav>
       </div>

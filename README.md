@@ -227,6 +227,23 @@ Quelques points qui ne se devinent pas à la lecture des fichiers :
 - **Les visuels de la vitrine ne sont pas précachés.** Le cache hors ligne est
   réservé au poste clinique ; la page publique se consulte en ligne.
 
+### Tarif et comparateur
+
+Les montants vivent en un seul endroit, en tête de `src/vitrine/vitrine.ts` :
+`LICENCE`, `MAINTENANCE` et `MOIS_COMPARES`. Les mêmes chiffres sont écrits en
+toutes lettres dans `index.html`, section `#tarif` : changer l'un sans l'autre
+donnerait une page qui se contredit.
+
+Le comparateur ne contient **aucun prix de concurrent**. Le visiteur saisit son
+propre abonnement, et le calcul se fait contre notre coût le plus défavorable,
+maintenance prise chaque année. Publier le tarif d'un confrère reviendrait à se
+porter garant d'une information qui vieillit et qu'on ne maîtrise pas.
+
+Le modèle : la licence couvre la première année de mises à jour, la maintenance
+court à partir de la deuxième. Le mois de bascule est le premier mois où
+l'abonnement cumulé dépasse la licence cumulée. Quand il n'existe pas sur dix
+ans, la page le dit et conseille de garder l'abonnement en place.
+
 Les captures de la vitrine sont dérivées de `docs/` par
 `node scripts/vitrine-images.mjs`, qui les réduit à la largeur d'affichage et
 les convertit en WebP (environ 420 Ko pour l'ensemble, contre 3 Mo en PNG). Les

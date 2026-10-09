@@ -734,6 +734,336 @@ p {
   }
 }
 
+/* ---------- Tarif ---------- */
+
+.tarif__tete {
+  max-width: 640px;
+}
+
+.offres {
+  margin-top: clamp(32px, 4vw, 44px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.offre {
+  border: 1px solid var(--filet);
+  border-radius: var(--r-surface);
+  background: var(--fond);
+  padding: clamp(24px, 3vw, 34px);
+}
+
+/* L'offre principale porte l'accent : une seule des deux est à acheter. */
+.offre--principale {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--filet));
+  box-shadow: var(--ombre);
+}
+
+.offre__nom {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--texte-doux);
+  letter-spacing: 0.01em;
+}
+
+.offre__prix {
+  margin-top: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.offre__montant {
+  font-size: clamp(2.6rem, 5vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.offre__devise {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--texte-doux);
+}
+
+.offre__cadence {
+  margin-top: 7px;
+  font-size: 14.5px;
+  color: var(--texte-tenu);
+}
+
+.offre__liste {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid var(--filet);
+  padding-top: 20px;
+}
+
+.offre__liste li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 14.8px;
+  color: var(--texte-doux);
+  line-height: 1.55;
+}
+
+/* Coche dessinée en CSS : deux traits, pas une image à charger. */
+.offre__liste li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 6px;
+  height: 11px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(42deg);
+}
+
+.offre__action {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.offre__note {
+  margin-top: 11px;
+  font-size: 13px;
+  color: var(--texte-tenu);
+  text-align: center;
+}
+
+.offre__appui {
+  margin-top: 20px;
+  padding: 15px 17px;
+  border-radius: var(--r-controle);
+  background: var(--fond-appui);
+  font-size: 14.3px;
+  color: var(--texte-doux);
+  line-height: 1.55;
+}
+
+.offre__appui strong {
+  color: var(--texte);
+  font-weight: 640;
+}
+
+@media (max-width: 860px) {
+  .offres {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Calculateur de coût ---------- */
+
+.calcul {
+  margin-top: 20px;
+  border: 1px solid var(--filet);
+  border-radius: var(--r-surface);
+  background: var(--fond);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.84fr);
+  overflow: hidden;
+}
+
+.calcul__saisie {
+  padding: clamp(24px, 3vw, 34px);
+}
+
+.calcul__titre {
+  font-size: 1.15rem;
+  font-weight: 670;
+  letter-spacing: -0.012em;
+}
+
+.calcul__texte {
+  margin-top: 9px;
+  font-size: 14.6px;
+  color: var(--texte-doux);
+  line-height: 1.58;
+  max-width: 46ch;
+}
+
+.calcul__etiquette {
+  display: block;
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  font-weight: 620;
+  color: var(--texte);
+}
+
+.calcul__champ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calcul__entree {
+  width: 150px;
+  font-family: inherit;
+  font-size: 1.22rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte);
+  background: var(--fond);
+  border: 1px solid var(--filet-appui);
+  border-radius: var(--r-controle);
+  padding: 10px 13px;
+}
+
+.calcul__entree:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.calcul__unite {
+  font-size: 14.5px;
+  color: var(--texte-tenu);
+}
+
+.calcul__aide {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--texte-tenu);
+}
+
+.calcul__sortie {
+  padding: clamp(24px, 3vw, 34px);
+  background: var(--fond-doux);
+  border-left: 1px solid var(--filet);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.calcul__ligne {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 11px;
+  font-size: 14.5px;
+}
+
+.calcul__ligne + .calcul__ligne {
+  border-top: 1px solid var(--filet);
+}
+
+.calcul__ligne--total {
+  border-top: 1px solid var(--filet-appui);
+  padding-top: 15px;
+}
+
+.calcul__cle {
+  color: var(--texte-doux);
+  line-height: 1.4;
+}
+
+.calcul__valeur {
+  font-weight: 660;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.calcul__valeur--fort {
+  font-size: 1.32rem;
+  color: var(--accent-texte);
+  letter-spacing: -0.02em;
+}
+
+.calcul__verdict {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--texte-tenu);
+  line-height: 1.5;
+}
+
+@media (max-width: 860px) {
+  .calcul {
+    grid-template-columns: 1fr;
+  }
+
+  .calcul__sortie {
+    border-left: none;
+    border-top: 1px solid var(--filet);
+  }
+}
+
+/* ---------- Questions fréquentes ---------- */
+
+.questions {
+  margin-top: clamp(30px, 4vw, 40px);
+  max-width: 860px;
+  border-top: 1px solid var(--filet);
+}
+
+.question {
+  border-bottom: 1px solid var(--filet);
+}
+
+.question__titre {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-block: 19px;
+  font-size: 16.5px;
+  font-weight: 620;
+  color: var(--texte);
+  cursor: pointer;
+  list-style: none;
+}
+
+.question__titre::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron tracé en bordures, pivoté à l'ouverture. */
+.question__titre::after {
+  content: "";
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--texte-tenu);
+  border-bottom: 2px solid var(--texte-tenu);
+  transform: rotate(45deg);
+  transition: transform 0.22s var(--sortie);
+}
+
+.question[open] .question__titre::after {
+  transform: rotate(-135deg);
+}
+
+.question__titre:hover {
+  color: var(--accent-texte);
+}
+
+.question__corps {
+  padding-bottom: 20px;
+  padding-right: 34px;
+  max-width: 72ch;
+}
+
+.question__corps p {
+  font-size: 15px;
+  color: var(--texte-doux);
+  line-height: 1.62;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question__titre::after {
+    transition: none;
+  }
+}
+
 /* ---------- Appel final ---------- */
 
 .final {
