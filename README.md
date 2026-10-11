@@ -88,8 +88,18 @@ Le tableau de bord agrège la vigilance sur l'ensemble du cabinet.
 
 ### Imagerie
 
-- Import par glisser-déposer, typé (rétro-alvéolaire, bitewing, panoramique, cone beam, photo) et
-  rattaché aux dents concernées.
+- Trois voies d'entrée, qui aboutissent toutes au même traitement : **collage Ctrl+V** depuis le
+  presse-papiers (le chemin le plus court depuis un logiciel de capteur), **glisser-déposer sur
+  tout l'onglet** et non sur une seule zone, et le sélecteur de fichiers. Import typé
+  (rétro-alvéolaire, bitewing, panoramique, cone beam, photo) et rattaché aux dents concernées.
+- Un cliché collé s'appelle « image.png » dans la plupart des navigateurs : il reçoit un libellé
+  horodaté **à la seconde**, sans quoi un bitewing gauche puis droit collés coup sur coup
+  donneraient deux vignettes indistinguables.
+- Un lot mixte produit **un seul message** nommant tous les fichiers écartés, plus un récapitulatif
+  de ce qui est entré. L'écriture précédente appelait `setErreur` par fichier : en déposant cinq
+  documents, un seul était signalé.
+- **Pas de DICOM.** Les fichiers `.dcm` sont refusés avec un message clair plutôt qu'acceptés puis
+  affichés cassés. Les lire demanderait un décodeur que ce paquet n'embarque pas.
 - Binaires dans **IndexedDB**, vignettes compressées à l'import.
 - **Chiffrés avec la clé du coffre** quand il est actif : une radio récupérée sur le disque sans la
   phrase secrète reste illisible.

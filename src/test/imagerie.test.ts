@@ -5,10 +5,14 @@ import {
   ID_VIGNETTE,
   enregistrerFichier,
   indexedDbDisponible,
+  libelleFichier,
   listerFichiers,
   lireFichier,
+  messageImport,
+  messageRefus,
   purger,
   supprimerFichier,
+  trierFichiers,
 } from '@/lib/imagerie';
 
 const contenu = () => new Blob([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3])], { type: 'image/png' });
@@ -74,5 +78,92 @@ describe('stockage des images', () => {
     expect(await lireFichier('garde', null)).not.toBeNull();
     expect(await lireFichier(ID_VIGNETTE('garde'), null)).not.toBeNull();
     expect(await lireFichier('orphelin', null)).toBeNull();
+  });
+});
+
+describe('tri des fichiers reçus', () => {
+  const fichier = (nom: string, type: string) => new File([new Uint8Array([1, 2, 3])], nom, { type });
+
+  it('garde les images et nomme les fichiers écartés', () => {
+    const { images, refuses } = trierFichiers([
+      fichier('retro-16.png', 'image/png'),
+      fichier('compte-rendu.pdf', 'application/pdf'),
+      fichier('pano.jpg', 'image/jpeg'),
+      fichier('capteur.dcm', ''),
+    ]);
+    expect(images.map((f) => f.name)).toEqual(['retro-16.png', 'pano.jpg']);
+    expect(refuses).toEqual(['compte-rendu.pdf', 'capteur.dcm']);
+  });
+
+  it('accepte une liste vide sans broncher', () => {
+    expect(trierFichiers([])).toEqual({ images: [], refuses: [] });
+  });
+
+  it('nomme un fichier sans nom', () => {
+    expect(trierFichiers([fichier('', 'application/pdf')]).refuses).toEqual(['fichier sans nom']);
+  });
+});
+
+describe('message de refus', () => {
+  it('ne dit rien quand rien n’est écarté', () => {
+    expect(messageRefus([])).toBe('');
+  });
+
+  it('nomme le fichier quand il est seul', () => {
+    expect(messageRefus(['bilan.pdf'])).toContain('bilan.pdf');
+  });
+
+  /*
+   * Le défaut corrigé : l'ancienne version appelait setErreur par fichier,
+   * si bien qu'un dépôt de cinq documents n'en signalait qu'un seul.
+   */
+  it('réunit tout un lot dans un seul message', () => {
+    const message = messageRefus(['a.pdf', 'b.txt', 'c.zip']);
+    expect(message).toContain('3 fichiers ignorés');
+    expect(message).toContain('a.pdf');
+    expect(message).toContain('b.txt');
+    expect(message).toContain('c.zip');
+  });
+});
+
+describe('libellé d’un cliché', () => {
+  const quand = new Date('2026-10-11T14:32:00');
+  const fichier = (nom: string) => new File([new Uint8Array([1])], nom, { type: 'image/png' });
+
+  it('retire l’extension d’un nom parlant', () => {
+    expect(libelleFichier(fichier('retro-16-17.png'), quand)).toBe('retro-16-17');
+  });
+
+  it('horodate les noms génériques du presse-papiers', () => {
+    for (const nom of ['image.png', 'Image.png', 'image (2).png', 'untitled.png', 'sans-titre.png']) {
+      expect(libelleFichier(fichier(nom), quand)).toBe('Cliché collé le 11/10/2026 à 14:32:00');
+    }
+  });
+
+  it('horodate aussi un fichier sans nom', () => {
+    expect(libelleFichier(fichier(''), quand)).toMatch(/^Cliché collé le /);
+  });
+
+  it('distingue deux collages séparés d’une seconde', () => {
+    const a = libelleFichier(fichier('image.png'), new Date('2026-10-11T14:32:00'));
+    const b = libelleFichier(fichier('image.png'), new Date('2026-10-11T14:32:01'));
+    expect(a).not.toBe(b);
+  });
+
+  it('laisse intact un nom de capture daté par le système', () => {
+    expect(libelleFichier(fichier('Screenshot 2026-10-11 at 14.32.png'), quand)).toBe(
+      'Screenshot 2026-10-11 at 14.32',
+    );
+  });
+});
+
+describe('récapitulatif d’import', () => {
+  it('se tait quand rien n’est entré', () => {
+    expect(messageImport(0)).toBe('');
+  });
+
+  it('accorde le singulier et le pluriel', () => {
+    expect(messageImport(1)).toBe('1 cliché importé.');
+    expect(messageImport(4)).toBe('4 clichés importés.');
   });
 });

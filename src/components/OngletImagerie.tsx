@@ -12,9 +12,13 @@ import {
   creerVignette,
   enregistrerFichier,
   indexedDbDisponible,
+  libelleFichier,
   lireFichier,
   mesurerImage,
+  messageImport,
+  messageRefus,
   supprimerFichier,
+  trierFichiers,
 } from '@/lib/imagerie';
 import { cx, formatDate, uid } from '@/lib/utils';
 
@@ -234,29 +238,38 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [recap, setRecap] = useState('');
+  const [survol, setSurvol] = useState(false);
   const [type, setType] = useState<TypeImage>('retroalveolaire');
   const [dents, setDents] = useState(dentsSelectionnees.join(', '));
   const champ = useRef<HTMLInputElement>(null);
+  /*
+   * Un glisser-déposer émet dragleave en entrant dans chaque enfant. Sans
+   * compteur, la zone clignoterait en traversant la grille de vignettes.
+   */
+  const profondeurSurvol = useRef(0);
 
   const images = data.images
     .filter((i) => i.patientId === patient.id)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const importer = useCallback(
-    async (fichiers: FileList | null) => {
-      if (!fichiers || fichiers.length === 0) return;
+    async (source: FileList | File[] | null) => {
+      const entrants = source ? Array.from(source) : [];
+      if (entrants.length === 0) return;
       if (!indexedDbDisponible()) {
         setErreur('Ce navigateur ne permet pas le stockage local des images.');
         return;
       }
+
+      const { images: aImporter, refuses } = trierFichiers(entrants);
+      setErreur(messageRefus(refuses));
+      setRecap('');
+      if (aImporter.length === 0) return;
+
       setOccupe(true);
-      setErreur('');
       try {
-        for (const fichier of Array.from(fichiers)) {
-          if (!fichier.type.startsWith('image/')) {
-            setErreur(`« ${fichier.name} » n’est pas une image.`);
-            continue;
-          }
+        for (const fichier of aImporter) {
           const id = uid('img');
           const dimensions = await mesurerImage(fichier);
           const vignette = await creerVignette(fichier);
@@ -271,7 +284,7 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
                 .filter((n) => Number.isFinite(n)),
               type,
               date: new Date().toISOString().slice(0, 10),
-              libelle: fichier.name.replace(/\.[^.]+$/, ''),
+              libelle: libelleFichier(fichier),
               mime: fichier.type,
               taille: fichier.size,
               largeur: dimensions.largeur,
@@ -281,6 +294,7 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
             id,
           );
         }
+        setRecap(messageImport(aImporter.length));
       } catch (e) {
         setErreur(e instanceof Error ? e.message : 'Import impossible.');
       } finally {
@@ -290,10 +304,83 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
     [ajouterImage, coffre, dents, patient.id, type],
   );
 
+  /*
+   * Collage depuis le presse-papiers.
+   *
+   * C'est le chemin le plus court depuis un logiciel de capteur : copier le
+   * cliché, revenir ici, Ctrl+V. L'onglet n'étant monté que lorsqu'il est
+   * actif, l'écouteur ne déborde pas sur les autres onglets du dossier.
+   */
+  useEffect(() => {
+    const coller = (e: ClipboardEvent) => {
+      // La cible d'un collage n'est pas toujours un élément : selon le focus,
+      // ce peut être le document ou la fenêtre, qui n'ont pas de closest().
+      const cible = e.target;
+      if (cible instanceof Element && cible.closest('input, textarea, select, [contenteditable="true"]')) {
+        // Un collage visant un champ de saisie lui appartient.
+        return;
+      }
+
+      const presse = e.clipboardData;
+      if (!presse) return;
+      const fichiers = Array.from(presse.files);
+      // Certains navigateurs ne remplissent que `items`.
+      if (fichiers.length === 0) {
+        for (const element of Array.from(presse.items)) {
+          if (element.kind !== 'file') continue;
+          const fichier = element.getAsFile();
+          if (fichier) fichiers.push(fichier);
+        }
+      }
+      if (fichiers.length === 0) return;
+
+      e.preventDefault();
+      void importer(fichiers);
+    };
+
+    window.addEventListener('paste', coller);
+    return () => window.removeEventListener('paste', coller);
+  }, [importer]);
+
   const image = images.find((i) => i.id === ouverte);
 
+  /* Le dépôt vaut sur tout l'onglet : viser une zone de 80 px est une corvée. */
+  const surDepot = (e: React.DragEvent) => {
+    e.preventDefault();
+    profondeurSurvol.current = 0;
+    setSurvol(false);
+    void importer(e.dataTransfer.files);
+  };
+
   return (
-    <div className="space-y-5">
+    <div
+      className="relative space-y-5"
+      onDragEnter={(e) => {
+        if (!Array.from(e.dataTransfer.types).includes('Files')) return;
+        profondeurSurvol.current += 1;
+        setSurvol(true);
+      }}
+      onDragOver={(e) => {
+        // Sans preventDefault, le navigateur refuse le dépôt.
+        if (Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault();
+      }}
+      onDragLeave={() => {
+        profondeurSurvol.current -= 1;
+        if (profondeurSurvol.current <= 0) {
+          profondeurSurvol.current = 0;
+          setSurvol(false);
+        }
+      }}
+      onDrop={surDepot}
+    >
+      {survol ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-brand-500 bg-brand-50/90"
+        >
+          <p className="text-sm font-semibold text-brand-700">Déposez les clichés pour les importer</p>
+        </div>
+      ) : null}
       <Card>
         <CardHeader
           titre="Imagerie"
@@ -325,16 +412,9 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
             </div>
           </div>
 
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              void importer(e.dataTransfer.files);
-            }}
-            className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center"
-          >
+          <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
             <p className="text-sm font-medium text-slate-700">
-              Glissez vos clichés ici, ou{' '}
+              Collez un cliché avec Ctrl+V, glissez vos fichiers n’importe où sur cet onglet, ou{' '}
               <button
                 type="button"
                 className="font-semibold text-brand-600 underline"
@@ -362,7 +442,21 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
           />
 
           {erreur ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{erreur}</p>
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {erreur}
+            </p>
+          ) : null}
+
+          {recap ? (
+            <p
+              role="status"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            >
+              {recap}
+            </p>
           ) : null}
 
           {images.length === 0 ? (

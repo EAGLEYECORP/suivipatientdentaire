@@ -142,3 +142,78 @@ export function creerVignette(fichier: Blob, cote = 320): Promise<Blob> {
 }
 
 export const ID_VIGNETTE = (id: string) => `${id}-vignette`;
+
+/*
+ * Tri et nommage des fichiers reçus.
+ *
+ * Les clichés arrivent par trois chemins : le sélecteur de fichiers, le
+ * glisser-déposer et le collage depuis le presse-papiers. Les trois passent
+ * par les fonctions ci-dessous, pour que le comportement soit le même quelle
+ * que soit la porte d'entrée.
+ */
+
+export interface TriFichiers {
+  images: File[];
+  refuses: string[];
+}
+
+/** Sépare les images du reste, en conservant le nom des fichiers écartés. */
+export function trierFichiers(fichiers: Iterable<File>): TriFichiers {
+  const images: File[] = [];
+  const refuses: string[] = [];
+  for (const fichier of fichiers) {
+    if (fichier.type.startsWith('image/')) images.push(fichier);
+    else refuses.push(fichier.name || 'fichier sans nom');
+  }
+  return { images, refuses };
+}
+
+/**
+ * Un seul message pour tout un lot.
+ *
+ * L'ancienne version écrasait l'erreur à chaque fichier écarté : en
+ * déposant cinq documents, le praticien n'en voyait qu'un seul nommé.
+ */
+export function messageRefus(refuses: string[]): string {
+  if (refuses.length === 0) return '';
+  if (refuses.length === 1) return `« ${refuses[0]} » n’est pas une image et a été ignoré.`;
+  return `${refuses.length} fichiers ignorés, ce ne sont pas des images : ${refuses.join(', ')}.`;
+}
+
+/* Noms que les navigateurs donnent à un presse-papiers sans fichier d'origine. */
+const NOMS_GENERIQUES = /^(image|untitled|sans[\s-]?titre|capture)(\s*\(\d+\))?$/i;
+
+/**
+ * Libellé lisible pour un cliché.
+ *
+ * Un fichier collé s'appelle « image.png » dans la plupart des navigateurs :
+ * dix collages donneraient dix vignettes nommées « image ». On leur substitue
+ * un horodatage, qui les distingue et dit d'où ils viennent.
+ */
+export function libelleFichier(fichier: File, maintenant = new Date()): string {
+  const sansExtension = fichier.name.replace(/\.[^.]+$/, '').trim();
+  if (sansExtension && !NOMS_GENERIQUES.test(sansExtension)) return sansExtension;
+
+  /*
+   * Les secondes ne sont pas une coquetterie : un bitewing gauche puis droit
+   * se collent à quelques secondes d'intervalle, et deux vignettes au même
+   * libellé ne se distinguent plus dans la galerie.
+   */
+  const jour = new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(maintenant);
+  const heure = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(maintenant);
+  return `Cliché collé le ${jour} à ${heure}`;
+}
+
+/** Récapitulatif après un import, pour que le praticien sache ce qui est entré. */
+export function messageImport(nombre: number): string {
+  if (nombre === 0) return '';
+  return nombre === 1 ? '1 cliché importé.' : `${nombre} clichés importés.`;
+}
