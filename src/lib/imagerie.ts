@@ -84,7 +84,9 @@ export async function listerFichiers(): Promise<string[]> {
 /** Supprime les binaires qui n'ont plus de fiche correspondante. */
 export async function purger(idsConserves: string[]): Promise<number> {
   const presents = await listerFichiers();
-  const aSupprimer = presents.filter((id) => !idsConserves.includes(id.replace(/-vignette$/, '')));
+  const aSupprimer = presents.filter(
+    (id) => !idsConserves.includes(id.replace(/-(vignette|original)$/, '')),
+  );
   for (const id of aSupprimer) await supprimerFichier(id);
   return aSupprimer.length;
 }
@@ -144,6 +146,14 @@ export function creerVignette(fichier: Blob, cote = 320): Promise<Blob> {
 export const ID_VIGNETTE = (id: string) => `${id}-vignette`;
 
 /*
+ * Un DICOM converti en PNG perd ses métadonnées. Le fichier d'origine est
+ * donc conservé à côté : le praticien doit pouvoir le réexporter vers un
+ * confrère ou un centre d'imagerie. Jeter la source serait une perte de
+ * données décidée à sa place.
+ */
+export const ID_ORIGINAL = (id: string) => `${id}-original`;
+
+/*
  * Tri et nommage des fichiers reçus.
  *
  * Les clichés arrivent par trois chemins : le sélecteur de fichiers, le
@@ -154,18 +164,31 @@ export const ID_VIGNETTE = (id: string) => `${id}-vignette`;
 
 export interface TriFichiers {
   images: File[];
+  /** Fichiers à faire passer par le décodeur DICOM. */
+  dicom: File[];
   refuses: string[];
 }
 
-/** Sépare les images du reste, en conservant le nom des fichiers écartés. */
+/*
+ * Les navigateurs ne donnent pas de type MIME aux .dcm : le tri se fait sur
+ * l'extension et sur le type quand il est renseigné. La marque DICM, elle,
+ * est vérifiée au décodage, là où l'on peut lire les octets.
+ */
+function ressembleADicom(fichier: File): boolean {
+  return /\.dcm$/i.test(fichier.name.trim()) || fichier.type === 'application/dicom';
+}
+
+/** Répartit les fichiers reçus entre images, DICOM et refusés. */
 export function trierFichiers(fichiers: Iterable<File>): TriFichiers {
   const images: File[] = [];
+  const dicom: File[] = [];
   const refuses: string[] = [];
   for (const fichier of fichiers) {
     if (fichier.type.startsWith('image/')) images.push(fichier);
+    else if (ressembleADicom(fichier)) dicom.push(fichier);
     else refuses.push(fichier.name || 'fichier sans nom');
   }
-  return { images, refuses };
+  return { images, dicom, refuses };
 }
 
 /**
@@ -210,6 +233,26 @@ export function libelleFichier(fichier: File, maintenant = new Date()): string {
     second: '2-digit',
   }).format(maintenant);
   return `Cliché collé le ${jour} à ${heure}`;
+}
+
+export interface EchecDicom {
+  nom: string;
+  raison: string;
+}
+
+/**
+ * Un seul bloc pour tout ce qui a mal tourné.
+ *
+ * Les refus DICOM portent chacun leur raison, et elle est actionnable :
+ * « compressé en JPEG 2000 » dit au praticien quoi changer dans son
+ * logiciel de capteur, là où « format non supporté » le laisse sans issue.
+ */
+export function messageProblemes(refuses: string[], dicomEchoues: EchecDicom[]): string {
+  const lignes: string[] = [];
+  const refus = messageRefus(refuses);
+  if (refus) lignes.push(refus);
+  for (const e of dicomEchoues) lignes.push(`« ${e.nom} » : ${e.raison}`);
+  return lignes.join('\n');
 }
 
 /** Récapitulatif après un import, pour que le praticien sache ce qui est entré. */

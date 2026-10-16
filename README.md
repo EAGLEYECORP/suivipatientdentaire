@@ -98,8 +98,19 @@ Le tableau de bord agrège la vigilance sur l'ensemble du cabinet.
 - Un lot mixte produit **un seul message** nommant tous les fichiers écartés, plus un récapitulatif
   de ce qui est entré. L'écriture précédente appelait `setErreur` par fichier : en déposant cinq
   documents, un seul était signalé.
-- **Pas de DICOM.** Les fichiers `.dcm` sont refusés avec un message clair plutôt qu'acceptés puis
-  affichés cassés. Les lire demanderait un décodeur que ce paquet n'embarque pas.
+- **DICOM non compressé**, le format réel des capteurs rétro-alvéolaires et des panoramiques.
+  Le fichier est converti en PNG à l'import, si bien que la galerie, les vignettes, le chiffrement
+  et la visionneuse n'ont rien à savoir du DICOM. Le décodeur part dans son propre fragment de
+  31 Ko, **chargé à la demande** : un cabinet qui n'ouvre jamais de DICOM ne le télécharge pas.
+- **Le fichier d'origine est conservé** et réexportable depuis la visionneuse. Convertir en PNG
+  sans garder la source serait une perte de données décidée à la place du praticien.
+- Fenêtrage selon la norme (VOI LUT linéaire), avec repli sur l'étendue réelle des valeurs quand
+  le capteur ne déclare pas de fenêtre : un capteur code sur 12 ou 16 bits, et écraser cela sur
+  256 niveaux sans fenêtrage donnerait une image plate et sans diagnostic. MONOCHROME1 est inversé.
+- **Les DICOM compressés sont refusés en nommant la compression** : « compressé en JPEG 2000 »
+  dit au praticien quoi changer dans son logiciel de capteur, là où « format non supporté » le
+  laisse sans issue. Un volume cone beam est refusé sur son poids plutôt que de faire tomber
+  l'onglet.
 - Binaires dans **IndexedDB**, vignettes compressées à l'import.
 - **Chiffrés avec la clé du coffre** quand il est actif : une radio récupérée sur le disque sans la
   phrase secrète reste illisible.
@@ -290,6 +301,7 @@ src/
     crypto.ts                Coffre AES-GCM / PBKDF2
     storage.ts               Persistance, migrations, export/import
     imagerie.ts              IndexedDB, vignettes, chiffrement des binaires
+    dicom.ts                 Lecture des DICOM non compressés, fenêtrage, conversion
     decision.ts              Règles cliniques et profils de risque
     historique.ts            Rejeu du journal, biographie, activité
     finance.ts               Totaux, statuts, numérotation

@@ -8,7 +8,9 @@ import {
   libelleFichier,
   listerFichiers,
   lireFichier,
+  ID_ORIGINAL,
   messageImport,
+  messageProblemes,
   messageRefus,
   purger,
   supprimerFichier,
@@ -84,19 +86,30 @@ describe('stockage des images', () => {
 describe('tri des fichiers reçus', () => {
   const fichier = (nom: string, type: string) => new File([new Uint8Array([1, 2, 3])], nom, { type });
 
-  it('garde les images et nomme les fichiers écartés', () => {
-    const { images, refuses } = trierFichiers([
+  it('répartit images, DICOM et refusés', () => {
+    const { images, dicom, refuses } = trierFichiers([
       fichier('retro-16.png', 'image/png'),
       fichier('compte-rendu.pdf', 'application/pdf'),
       fichier('pano.jpg', 'image/jpeg'),
       fichier('capteur.dcm', ''),
     ]);
     expect(images.map((f) => f.name)).toEqual(['retro-16.png', 'pano.jpg']);
-    expect(refuses).toEqual(['compte-rendu.pdf', 'capteur.dcm']);
+    expect(dicom.map((f) => f.name)).toEqual(['capteur.dcm']);
+    expect(refuses).toEqual(['compte-rendu.pdf']);
+  });
+
+  /* Les navigateurs ne donnent pas de type MIME aux .dcm. */
+  it('reconnaît un DICOM par l’extension comme par le type', () => {
+    const { dicom } = trierFichiers([
+      fichier('CAPTEUR.DCM', ''),
+      fichier('sans-extension', 'application/dicom'),
+      fichier('autre.bin', ''),
+    ]);
+    expect(dicom.map((f) => f.name)).toEqual(['CAPTEUR.DCM', 'sans-extension']);
   });
 
   it('accepte une liste vide sans broncher', () => {
-    expect(trierFichiers([])).toEqual({ images: [], refuses: [] });
+    expect(trierFichiers([])).toEqual({ images: [], dicom: [], refuses: [] });
   });
 
   it('nomme un fichier sans nom', () => {
@@ -123,6 +136,31 @@ describe('message de refus', () => {
     expect(message).toContain('a.pdf');
     expect(message).toContain('b.txt');
     expect(message).toContain('c.zip');
+  });
+});
+
+describe('message de problèmes', () => {
+  it('se tait quand tout va bien', () => {
+    expect(messageProblemes([], [])).toBe('');
+  });
+
+  it('réunit refus génériques et échecs DICOM', () => {
+    const m = messageProblemes(
+      ['bilan.pdf'],
+      [{ nom: 'pano.dcm', raison: 'Ce DICOM est compressé en JPEG 2000.' }],
+    );
+    expect(m).toContain('bilan.pdf');
+    expect(m).toContain('pano.dcm');
+    expect(m).toContain('JPEG 2000');
+    expect(m.split('\n')).toHaveLength(2);
+  });
+
+  it('donne une ligne par DICOM en échec', () => {
+    const m = messageProblemes([], [
+      { nom: 'a.dcm', raison: 'compressé.' },
+      { nom: 'b.dcm', raison: 'illisible.' },
+    ]);
+    expect(m.split('\n')).toHaveLength(2);
   });
 });
 
@@ -165,5 +203,35 @@ describe('récapitulatif d’import', () => {
   it('accorde le singulier et le pluriel', () => {
     expect(messageImport(1)).toBe('1 cliché importé.');
     expect(messageImport(4)).toBe('4 clichés importés.');
+  });
+});
+
+describe('clé du fichier d’origine', () => {
+  it('se dérive de l’identifiant du cliché', () => {
+    expect(ID_ORIGINAL('img_7')).toBe('img_7-original');
+    expect(ID_VIGNETTE('img_7')).toBe('img_7-vignette');
+  });
+
+  /*
+   * La purge comparait les identifiants après avoir retiré « -vignette ».
+   * Sans le même traitement pour « -original », chaque passage aurait
+   * effacé les DICOM d'origine encore rattachés à un dossier.
+   */
+  it('survit à la purge quand le cliché est conservé', async () => {
+    for (const id of await listerFichiers()) await supprimerFichier(id);
+    const png = new Blob([new Uint8Array([1])], { type: 'image/png' });
+    await enregistrerFichier('img_9', png, null);
+    await enregistrerFichier(ID_VIGNETTE('img_9'), png, null);
+    await enregistrerFichier(ID_ORIGINAL('img_9'), png, null);
+
+    expect(await purger(['img_9'])).toBe(0);
+    expect((await listerFichiers()).sort()).toEqual(
+      ['img_9', 'img_9-original', 'img_9-vignette'].sort(),
+    );
+  });
+
+  it('emporte l’original quand le cliché disparaît', async () => {
+    expect(await purger([])).toBe(3);
+    expect(await listerFichiers()).toEqual([]);
   });
 });

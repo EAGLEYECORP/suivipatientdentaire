@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import {
+  ID_ORIGINAL,
   ID_VIGNETTE,
   creerVignette,
   enregistrerFichier,
@@ -16,10 +17,12 @@ import {
   lireFichier,
   mesurerImage,
   messageImport,
-  messageRefus,
+  messageProblemes,
   supprimerFichier,
   trierFichiers,
+  type EchecDicom,
 } from '@/lib/imagerie';
+import { DicomIllisible, dicomVersPng, libelleDicom } from '@/lib/dicom';
 import { cx, formatDate, uid } from '@/lib/utils';
 
 const TYPES: Array<{ cle: TypeImage; libelle: string }> = [
@@ -30,6 +33,13 @@ const TYPES: Array<{ cle: TypeImage; libelle: string }> = [
   { cle: 'photo', libelle: 'Photo intra-orale' },
   { cle: 'autre', libelle: 'Autre' },
 ];
+
+/*
+ * Au-delà de ce poids, un DICOM est presque toujours un volume cone beam :
+ * le charger entièrement en mémoire ferait tomber l'onglet. Mieux vaut un
+ * refus qui explique qu'un plantage qui n'explique rien.
+ */
+const TAILLE_DICOM_MAX = 200_000_000;
 
 const LIBELLE_TYPE = Object.fromEntries(TYPES.map((t) => [t.cle, t.libelle])) as Record<TypeImage, string>;
 
@@ -94,12 +104,42 @@ function Vignette({ image, onOuvrir }: { image: ImageClinique; onOuvrir: () => v
 
 function Visionneuse({ image, onFermer }: { image: ImageClinique; onFermer: () => void }) {
   const { url, erreur } = useFichier(image.id);
-  const { majImage, supprimerImage } = useApp();
+  const { coffre, majImage, supprimerImage } = useApp();
+  /*
+   * Un cliché venu d'un DICOM garde son fichier source. On ne le lit que
+   * pour savoir s'il existe : le bouton d'export n'apparaît que dans ce cas.
+   */
+  const [original, setOriginal] = useState<Blob | null>(null);
   const [zoom, setZoom] = useState(1);
   const [inverse, setInverse] = useState(false);
   const [contraste, setContraste] = useState(100);
   const [annotation, setAnnotation] = useState('');
   const zone = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let annule = false;
+    lireFichier(ID_ORIGINAL(image.id), coffre)
+      .then((blob) => {
+        if (!annule) setOriginal(blob);
+      })
+      .catch(() => {
+        // Coffre verrouillé ou original absent : pas de bouton, pas d'erreur.
+      });
+    return () => {
+      annule = true;
+    };
+  }, [image.id, coffre]);
+
+  const exporterOriginal = () => {
+    if (!original) return;
+    const lien = document.createElement('a');
+    lien.href = URL.createObjectURL(original);
+    lien.download = `${image.libelle.replace(/[^\p{L}\p{N}\-_ ]+/gu, '-').trim() || 'cliche'}.dcm`;
+    lien.click();
+    // Révoquer tout de suite annulerait le téléchargement sur certains
+    // navigateurs : on laisse passer un instant.
+    setTimeout(() => URL.revokeObjectURL(lien.href), 2000);
+  };
 
   const poser = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!annotation.trim() || !zone.current) return;
@@ -135,12 +175,18 @@ function Visionneuse({ image, onFermer }: { image: ImageClinique; onFermer: () =
             onClick={() => {
               void supprimerFichier(image.id);
               void supprimerFichier(ID_VIGNETTE(image.id));
+              void supprimerFichier(ID_ORIGINAL(image.id));
               supprimerImage(image.id);
               onFermer();
             }}
           >
             Supprimer
           </Button>
+          {original ? (
+            <Button variante="secondaire" onClick={exporterOriginal}>
+              Exporter le DICOM d’origine
+            </Button>
+          ) : null}
           <Button variante="secondaire" onClick={onFermer}>
             Fermer
           </Button>
@@ -262,12 +308,33 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
         return;
       }
 
-      const { images: aImporter, refuses } = trierFichiers(entrants);
-      setErreur(messageRefus(refuses));
+      const { images: aImporter, dicom, refuses } = trierFichiers(entrants);
+      const echecs: EchecDicom[] = [];
+      setErreur(messageProblemes(refuses, echecs));
       setRecap('');
-      if (aImporter.length === 0) return;
+      if (aImporter.length === 0 && dicom.length === 0) return;
+
+      const dentsSaisies = () =>
+        dents
+          .split(',')
+          .map((x) => Number.parseInt(x.trim(), 10))
+          .filter((n) => Number.isFinite(n));
+
+      const fiche = (libelle: string, taille: number, largeur: number, hauteur: number) => ({
+        patientId: patient.id,
+        dents: dentsSaisies(),
+        type,
+        date: new Date().toISOString().slice(0, 10),
+        libelle,
+        mime: 'image/png',
+        taille,
+        largeur,
+        hauteur,
+        annotations: [],
+      });
 
       setOccupe(true);
+      let entres = 0;
       try {
         for (const fichier of aImporter) {
           const id = uid('img');
@@ -276,25 +343,54 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
           await enregistrerFichier(id, fichier, coffre);
           await enregistrerFichier(ID_VIGNETTE(id), vignette, coffre);
           ajouterImage(
-            {
-              patientId: patient.id,
-              dents: dents
-                .split(',')
-                .map((x) => Number.parseInt(x.trim(), 10))
-                .filter((n) => Number.isFinite(n)),
-              type,
-              date: new Date().toISOString().slice(0, 10),
-              libelle: libelleFichier(fichier),
-              mime: fichier.type,
-              taille: fichier.size,
-              largeur: dimensions.largeur,
-              hauteur: dimensions.hauteur,
-              annotations: [],
-            },
+            { ...fiche(libelleFichier(fichier), fichier.size, dimensions.largeur, dimensions.hauteur), mime: fichier.type },
             id,
           );
+          entres += 1;
         }
-        setRecap(messageImport(aImporter.length));
+
+        /*
+         * Les DICOM sont convertis en PNG pour l'affichage, et le fichier
+         * d'origine est conservé à côté. Chaque échec porte sa raison : un
+         * lot de cinq clichés dont deux compressés doit importer les trois
+         * autres et dire précisément ce qui bloque sur les deux.
+         */
+        for (const fichier of dicom) {
+          try {
+            if (fichier.size > TAILLE_DICOM_MAX) {
+              throw new DicomIllisible(
+                `Ce fichier pèse ${Math.round(fichier.size / 1_000_000)} Mo. Au-delà de ${Math.round(
+                  TAILLE_DICOM_MAX / 1_000_000,
+                )} Mo il s’agit presque toujours d’un volume cone beam, que cette version n’affiche pas.`,
+              );
+            }
+            const { png, meta } = await dicomVersPng(fichier);
+            const id = uid('img');
+            const vignette = await creerVignette(png);
+            await enregistrerFichier(id, png, coffre);
+            await enregistrerFichier(ID_VIGNETTE(id), vignette, coffre);
+            await enregistrerFichier(ID_ORIGINAL(id), fichier, coffre);
+            ajouterImage(
+              fiche(libelleDicom(fichier.name, meta), png.size, meta.largeur, meta.hauteur),
+              id,
+            );
+            entres += 1;
+            if (meta.nombreDeVues > 1) {
+              echecs.push({
+                nom: fichier.name,
+                raison: `${meta.nombreDeVues} vues dans ce fichier, seule la première a été importée.`,
+              });
+            }
+          } catch (e) {
+            echecs.push({
+              nom: fichier.name || 'fichier sans nom',
+              raison: e instanceof Error ? e.message : 'lecture impossible.',
+            });
+          }
+        }
+
+        setErreur(messageProblemes(refuses, echecs));
+        setRecap(messageImport(entres));
       } catch (e) {
         setErreur(e instanceof Error ? e.message : 'Import impossible.');
       } finally {
@@ -425,14 +521,14 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
               .
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              Les images restent sur ce poste : aucun envoi vers un serveur.
+              Images et DICOM non compressés. Tout reste sur ce poste : aucun envoi vers un serveur.
             </p>
           </div>
 
           <input
             ref={champ}
             type="file"
-            accept="image/*"
+            accept="image/*,.dcm,application/dicom"
             multiple
             className="hidden"
             onChange={(e) => {
@@ -444,7 +540,7 @@ export function OngletImagerie({ patient, dentsSelectionnees }: { patient: Patie
           {erreur ? (
             <p
               role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
             >
               {erreur}
             </p>
