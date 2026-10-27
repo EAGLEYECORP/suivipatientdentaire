@@ -172,6 +172,36 @@ insensible aux accents sur nom, téléphone, e-mail, numéro de sécurité socia
 
 ---
 
+### Traçabilité de la stérilisation
+
+Registre des cycles, obligation réglementaire en France pour les dispositifs réutilisables. Mais
+l'enjeu n'est pas de tenir un registre : c'est de pouvoir répondre, un jeudi, à la question « le
+test biologique du cycle 148 est revenu positif, quels patients ont reçu ces instruments ? ».
+
+- Le modèle gère **l'invalidation rétrospective**, qui est le cas réel : le test de spores revient
+  24 à 48 heures après le cycle, donc un cycle déclaré conforme lundi peut devoir être invalidé
+  mercredi alors que sa charge a déjà servi. L'invalidation prime sur des indicateurs au vert.
+- Un test biologique **non réalisé** n'est pas un échec : il n'est pas fait à chaque cycle. Seul un
+  résultat positif condamne.
+- Invalider un cycle **écrit dans le dossier de chaque patient exposé**, pas seulement dans le
+  registre. C'est pour cela que `muter` accepte désormais un lot d'événements.
+- Un cycle raté dont rien n'est sorti demande de relancer un cycle ; un cycle raté déjà employé
+  impose de rappeler des patients. Les deux sont distingués.
+
+### Historique du dossier
+
+Le journal en ajout seul existait depuis le début, mais n'était affiché nulle part comme suite
+d'événements : il ne servait qu'à la remontée temporelle et à la biographie d'une dent. Un
+praticien ne pouvait pas lire ce qui s'était passé dans un dossier, et l'invalidation d'un cycle de
+stérilisation n'aurait atteint personne.
+
+Un onglet **Historique** le rend lisible : fil chronologique, filtres par nature, auteur et dent
+concernée, et un bandeau rouge pour les événements de traçabilité qui demandent une action.
+
+En l'affichant, un défaut est apparu : les écritures nommaient les états par leur clé technique,
+« Dent 45 : a_extraire ». Corrigé pour les écritures à venir. Les anciennes gardent leur texte,
+puisque le journal ne se réécrit pas, et c'est précisément le propos.
+
 ### Veille professionnelle
 
 Un fil embarqué sur les technologies, la recherche et le cadre de remboursement. Il est **livré
@@ -342,6 +372,7 @@ src/
     imagerie.ts              IndexedDB, vignettes, chiffrement des binaires
     fournitures.ts           Seuils, quantités à commander, groupement par fournisseur
     veille.ts                Fil professionnel daté, sources et niveaux de maturité
+    sterilisation.ts         Statut des cycles, invalidation rétrospective, remontée aux patients
     dicom.ts                 Lecture des DICOM non compressés, fenêtrage, conversion
     decision.ts              Règles cliniques et profils de risque
     historique.ts            Rejeu du journal, biographie, activité

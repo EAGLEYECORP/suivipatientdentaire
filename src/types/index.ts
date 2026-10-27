@@ -236,6 +236,59 @@ export interface ArticleStock {
   fournisseurId: string | null;
 }
 
+/* ------------------------------------------------------------------ *
+ * Traçabilité de la stérilisation.
+ *
+ * Obligation réglementaire en France pour les dispositifs médicaux
+ * réutilisables, et bonne pratique partout. L'enjeu n'est pas de tenir un
+ * registre : c'est de pouvoir répondre, un jeudi, à la question « le test
+ * biologique du cycle 148 est revenu positif, quels patients ont reçu ces
+ * instruments ? ». Sans ce lien, le registre ne sert à rien.
+ * ------------------------------------------------------------------ */
+
+export type TypeSterilisateur = 'autoclave_b' | 'autoclave_s' | 'autoclave_n' | 'chaleur_seche';
+
+export interface CycleSterilisation {
+  id: string;
+  /** Numéro porté sur les sachets. Unique : c'est la clé de traçabilité. */
+  numero: string;
+  date: string;
+  /** Identification de l'appareil, utile quand le cabinet en a deux. */
+  sterilisateur: string;
+  type: TypeSterilisateur;
+  temperature: number;
+  /** Durée du palier de stérilisation, en minutes. */
+  dureePalier: number;
+  charge: string;
+  /** Diagramme ou enregistrement du cycle. */
+  indicateurPhysique: boolean;
+  /** Intégrateur chimique placé dans la charge. */
+  indicateurChimique: boolean;
+  /** Test de spores : null quand il n'est pas réalisé sur ce cycle. */
+  indicateurBiologique: boolean | null;
+  operateur: string;
+  note: string;
+  /**
+   * Invalidation rétrospective.
+   *
+   * Le test biologique revient 24 à 48 heures après le cycle. Un cycle
+   * déclaré conforme le lundi peut devoir être invalidé le mercredi, alors
+   * que ses instruments ont déjà servi. C'est précisément ce cas qui rend
+   * la traçabilité obligatoire.
+   */
+  invalideLe: string | null;
+  motifInvalidation: string;
+}
+
+/** Emploi d'une charge stérilisée sur un patient. */
+export interface UtilisationCycle {
+  id: string;
+  cycleId: string;
+  patientId: string;
+  date: string;
+  acte: string;
+}
+
 /** Everything the app persists. */
 export interface AppData {
   version: number;
@@ -254,6 +307,8 @@ export interface AppData {
   ordonnances: Ordonnance[];
   fournisseurs: Fournisseur[];
   stock: ArticleStock[];
+  cycles: CycleSterilisation[];
+  utilisationsCycle: UtilisationCycle[];
 }
 
 /* ------------------------------------------------------------------ *
@@ -265,6 +320,8 @@ export interface AppData {
  * ------------------------------------------------------------------ */
 
 export type TypeEvenement =
+  | 'sterilisation.utilisation'
+  | 'sterilisation.invalidation'
   | 'patient.cree'
   | 'patient.maj'
   | 'patient.supprime'

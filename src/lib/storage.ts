@@ -10,7 +10,7 @@ import { facteursRisqueVides } from '@/data/seed';
 import { NOMENCLATURE_PAR_DEFAUT, nomenclature } from '@/data/nomenclatures';
 
 export const CLE_STOCKAGE = 'suivi-patient-dentaire:v1';
-export const VERSION_DONNEES = 4;
+export const VERSION_DONNEES = 5;
 
 export type Enveloppe =
   | { etat: 'vide' }
@@ -137,6 +137,10 @@ export function migrer(data: AppData): AppData {
     // la remplit à son rythme, sans qu'on lui impose un catalogue.
     fournisseurs: data.fournisseurs ?? [],
     stock: data.stock ?? [],
+    // Version 5 : traçabilité de la stérilisation. Registre vide pour un
+    // cabinet existant, qui le remplit à partir de son prochain cycle.
+    cycles: data.cycles ?? [],
+    utilisationsCycle: data.utilisationsCycle ?? [],
   };
 }
 

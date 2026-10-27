@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { ETATS } from '@/data/teeth';
 import type {
   ArticleStock,
+  CycleSterilisation,
+  UtilisationCycle,
   Fournisseur,
   Acte,
   AppData,
@@ -89,6 +92,11 @@ export interface AppActions {
   supprimerCharting: (id: string) => void;
 
   // Imagerie
+  enregistrerCycle: (c: Omit<CycleSterilisation, 'id'>) => CycleSterilisation;
+  majCycle: (id: string, patch: Partial<CycleSterilisation>) => void;
+  invaliderCycle: (id: string, motif: string) => void;
+  enregistrerUtilisation: (u: Omit<UtilisationCycle, 'id'>) => UtilisationCycle;
+  supprimerUtilisation: (id: string) => void;
   ajouterArticle: (a: Omit<ArticleStock, 'id'>) => ArticleStock;
   majArticle: (id: string, patch: Partial<ArticleStock>) => void;
   supprimerArticle: (id: string) => void;
@@ -250,25 +258,36 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
    * L'événement est construit avant l'appel pour que la fonction de mise à
    * jour reste pure.
    */
+  /*
+   * Une mutation peut désormais écrire plusieurs événements.
+   *
+   * Invalider un cycle de stérilisation concerne tous les patients qui ont
+   * reçu sa charge : il faut une écriture par dossier, sinon l'événement
+   * n'apparaîtrait dans aucun d'eux. Un brouillon seul reste accepté, les
+   * appels existants n'ont pas changé.
+   */
   const muter = useCallback(
-    (maj: (d: AppData) => AppData, brouillon: BrouillonEvenement | null) => {
-      const evenement: EvenementJournal | null = brouillon
-        ? {
-            id: uid('ev'),
-            date: maintenant(),
-            auteur: praticienActif,
-            type: brouillon.type,
-            patientId: brouillon.patientId,
-            dent: brouillon.dent ?? null,
-            cible: brouillon.cible,
-            resume: brouillon.resume,
-            avant: brouillon.avant ?? null,
-            apres: brouillon.apres ?? null,
-          }
-        : null;
+    (
+      maj: (d: AppData) => AppData,
+      brouillon: BrouillonEvenement | BrouillonEvenement[] | null,
+    ) => {
+      const brouillons = brouillon === null ? [] : Array.isArray(brouillon) ? brouillon : [brouillon];
+      const date = maintenant();
+      const evenements: EvenementJournal[] = brouillons.map((b) => ({
+        id: uid('ev'),
+        date,
+        auteur: praticienActif,
+        type: b.type,
+        patientId: b.patientId,
+        dent: b.dent ?? null,
+        cible: b.cible,
+        resume: b.resume,
+        avant: b.avant ?? null,
+        apres: b.apres ?? null,
+      }));
       setData((d) => {
         const suivant = maj(d);
-        return evenement ? { ...suivant, journal: [...suivant.journal, evenement] } : suivant;
+        return evenements.length ? { ...suivant, journal: [...suivant.journal, ...evenements] } : suivant;
       });
     },
     [praticienActif],
@@ -806,6 +825,112 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
     [muter, data.chartingsParo],
   );
 
+  /* -------------------------------------------- Stérilisation */
+
+  /*
+   * Les cycles eux-mêmes ne passent pas par le journal clinique : c'est un
+   * registre d'appareil. En revanche, l'emploi d'une charge sur un patient
+   * et l'invalidation d'un cycle sont des faits cliniques, qui doivent
+   * apparaître dans le dossier concerné et ne plus pouvoir en sortir.
+   */
+
+  const enregistrerCycle = useCallback(
+    (c: Omit<CycleSterilisation, 'id'>) => {
+      const cycle: CycleSterilisation = { ...c, id: uid('cyc') };
+      muter((d) => ({ ...d, cycles: [...d.cycles, cycle] }), null);
+      return cycle;
+    },
+    [muter],
+  );
+
+  const majCycle = useCallback(
+    (id: string, patch: Partial<CycleSterilisation>) => {
+      muter((d) => ({ ...d, cycles: d.cycles.map((c) => (c.id === id ? { ...c, ...patch } : c)) }), null);
+    },
+    [muter],
+  );
+
+  /**
+   * Invalidation rétrospective d'un cycle.
+   *
+   * Écrit un événement dans le dossier de chaque patient ayant reçu la
+   * charge. Sans patient concerné, une écriture au niveau du cabinet
+   * conserve tout de même la trace de la décision.
+   */
+  const invaliderCycle = useCallback(
+    (id: string, motif: string) => {
+      const cycle = data.cycles.find((c) => c.id === id);
+      if (!cycle) return;
+      const exposes = [
+        ...new Set(data.utilisationsCycle.filter((u) => u.cycleId === id).map((u) => u.patientId)),
+      ];
+      const resume = `Cycle de stérilisation n° ${cycle.numero} invalidé. ${motif}`.trim();
+      const evenements: BrouillonEvenement[] = exposes.length
+        ? exposes.map((patientId) => ({
+            type: 'sterilisation.invalidation' as const,
+            patientId,
+            cible: `Cycle n° ${cycle.numero}`,
+            resume: `${resume} Instruments employés sur ce patient : vérifier la conduite à tenir.`,
+            avant: { statut: 'conforme' },
+            apres: { statut: 'invalide', motif },
+          }))
+        : [
+            {
+              type: 'sterilisation.invalidation' as const,
+              patientId: null,
+              cible: `Cycle n° ${cycle.numero}`,
+              resume: `${resume} Aucune charge employée.`,
+              apres: { statut: 'invalide', motif },
+            },
+          ];
+
+      muter(
+        (d) => ({
+          ...d,
+          cycles: d.cycles.map((c) =>
+            c.id === id ? { ...c, invalideLe: maintenant(), motifInvalidation: motif } : c,
+          ),
+        }),
+        evenements,
+      );
+    },
+    [data.cycles, data.utilisationsCycle, muter],
+  );
+
+  const enregistrerUtilisation = useCallback(
+    (u: Omit<UtilisationCycle, 'id'>) => {
+      const utilisation: UtilisationCycle = { ...u, id: uid('uti') };
+      const cycle = data.cycles.find((c) => c.id === u.cycleId);
+      muter((d) => ({ ...d, utilisationsCycle: [...d.utilisationsCycle, utilisation] }), {
+        type: 'sterilisation.utilisation',
+        patientId: utilisation.patientId,
+        cible: `Cycle n° ${cycle?.numero ?? '?'}`,
+        resume: `Instruments du cycle n° ${cycle?.numero ?? '?'} employés${
+          utilisation.acte ? ` pour : ${utilisation.acte}` : ''
+        }.`,
+        apres: { cycleId: utilisation.cycleId, acte: utilisation.acte },
+      });
+      return utilisation;
+    },
+    [data.cycles, muter],
+  );
+
+  const supprimerUtilisation = useCallback(
+    (id: string) => {
+      const avant = data.utilisationsCycle.find((u) => u.id === id);
+      if (!avant) return;
+      const cycle = data.cycles.find((c) => c.id === avant.cycleId);
+      muter((d) => ({ ...d, utilisationsCycle: d.utilisationsCycle.filter((u) => u.id !== id) }), {
+        type: 'sterilisation.utilisation',
+        patientId: avant.patientId,
+        cible: `Cycle n° ${cycle?.numero ?? '?'}`,
+        resume: `Lien au cycle n° ${cycle?.numero ?? '?'} retiré du dossier.`,
+        avant: { cycleId: avant.cycleId, acte: avant.acte },
+      });
+    },
+    [data.cycles, data.utilisationsCycle, muter],
+  );
+
   /* ------------------------------------------- Approvisionnement */
 
   /*
@@ -1211,6 +1336,11 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       supprimerNote,
       enregistrerCharting,
       supprimerCharting,
+      enregistrerCycle,
+      majCycle,
+      invaliderCycle,
+      enregistrerUtilisation,
+      supprimerUtilisation,
       ajouterArticle,
       majArticle,
       supprimerArticle,
@@ -1329,8 +1459,15 @@ function champsModifies(avant: Patient, patch: Partial<Patient>): string[] {
 
 function resumeDent(avant: DentEtat | undefined, apres: DentEtat): string {
   const faces = apres.faces.length ? ` (faces ${apres.faces.join('/')})` : '';
-  if (!avant) return `Dent ${apres.numero} : ${apres.etat}${faces}.`;
-  if (avant.etat !== apres.etat) return `Dent ${apres.numero} : ${avant.etat} → ${apres.etat}${faces}.`;
+  /*
+   * Libellé lisible et non clé brute : le journal se lit désormais dans le
+   * dossier, et « a_extraire » n'est pas une phrase que l'on montre à un
+   * praticien, encore moins à un patient qui demande son historique.
+   */
+  const nom = (e: DentEtat['etat']) => ETATS[e]?.libelle ?? e;
+  if (!avant) return `Dent ${apres.numero} : ${nom(apres.etat)}${faces}.`;
+  if (avant.etat !== apres.etat)
+    return `Dent ${apres.numero} : ${nom(avant.etat)} → ${nom(apres.etat)}${faces}.`;
   if (JSON.stringify(avant.faces) !== JSON.stringify(apres.faces))
     return `Dent ${apres.numero} : faces mises à jour${faces}.`;
   if (avant.note !== apres.note) return `Dent ${apres.numero} : note clinique modifiée.`;

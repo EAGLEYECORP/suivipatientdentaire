@@ -136,6 +136,9 @@ describe('coffre et magasin', () => {
     expect(Array.isArray(migre.stock)).toBe(true);
     expect(migre.fournisseurs).toEqual([]);
     expect(migre.stock).toEqual([]);
+    // Version 5 : registre de stérilisation.
+    expect(migre.cycles).toEqual([]);
+    expect(migre.utilisationsCycle).toEqual([]);
     // Les champs nouveaux reçoivent des valeurs sûres.
     expect(migre.patients[0].facteursRisque.tabac).toBe('non');
     expect(migre.patients[0].rappelMois).toBe(6);

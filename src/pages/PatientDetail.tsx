@@ -14,6 +14,7 @@ import { OdontogrammeArcade } from '@/components/OdontogrammeArcade';
 import { ToothPanel } from '@/components/ToothPanel';
 import { PatientForm } from '@/components/PatientForm';
 import { OngletParodontie } from '@/components/perio/OngletParodontie';
+import { OngletHistorique } from '@/components/OngletHistorique';
 import { OngletImagerie } from '@/components/OngletImagerie';
 import { OngletDevis } from '@/components/OngletDevis';
 import { OngletOrdonnances } from '@/components/OngletOrdonnances';
@@ -45,7 +46,7 @@ import {
   maintenant,
 } from '@/lib/utils';
 
-type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'devis' | 'ordonnances' | 'agenda' | 'notes' | 'facturation' | 'dossier';
+type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'devis' | 'ordonnances' | 'agenda' | 'notes' | 'facturation' | 'dossier' | 'historique';
 
 const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'schema', label: 'Schéma dentaire' },
@@ -58,6 +59,7 @@ const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'notes', label: 'Notes cliniques' },
   { cle: 'facturation', label: 'Facturation' },
   { cle: 'dossier', label: 'Dossier médical' },
+  { cle: 'historique', label: 'Historique' },
 ];
 
 const STATUT_ACTE_META: Record<Acte['statut'], { libelle: string; ton: 'neutre' | 'violet' | 'succes' | 'danger' }> = {
@@ -566,6 +568,8 @@ export function PatientDetail() {
       {onglet === 'parodontie' ? <OngletParodontie patient={patient} /> : null}
 
       {onglet === 'imagerie' ? <OngletImagerie patient={patient} dentsSelectionnees={selection} /> : null}
+
+      {onglet === 'historique' ? <OngletHistorique patient={patient} /> : null}
 
       {onglet === 'devis' ? <OngletDevis patient={patient} /> : null}
 

@@ -1,9 +1,12 @@
 import { CATALOGUE_DEPART } from '@/data/fournitures';
+import { ETATS } from '@/data/teeth';
 import type {
   AppData,
   Acte,
   ArticleStock,
+  CycleSterilisation,
   Fournisseur,
+  UtilisationCycle,
   DentEtat,
   EvenementJournal,
   LigneDevis,
@@ -78,6 +81,8 @@ export function donneesVides(): AppData {
     cabinet: cabinetParDefaut(),
     fournisseurs: [],
     stock: [],
+    cycles: [],
+    utilisationsCycle: [],
     patients: [],
     odontogrammes: [],
     actes: [],
@@ -429,11 +434,53 @@ export function donneesDemo(): AppData {
     fournisseurId: rang % 3 === 2 ? 'four_2' : 'four_1',
   }));
 
+  /*
+   * Registre de stérilisation de démonstration.
+   *
+   * Le cycle 148 est volontairement invalidé après coup, test de spores
+   * positif revenu le surlendemain, alors que sa charge avait déjà servi à
+   * deux patients. C'est le cas que le module existe pour traiter : sans le
+   * lien cycle-patient, ces deux dossiers seraient introuvables.
+   */
+  const cycles: CycleSterilisation[] = [
+    { id: 'cyc_146', numero: '146', date: jour(-9, 8, 15), sterilisateur: 'Autoclave 1', type: 'autoclave_b',
+      temperature: 134, dureePalier: 18, charge: 'Plateaux de consultation, 6 sachets',
+      indicateurPhysique: true, indicateurChimique: true, indicateurBiologique: null,
+      operateur: p1.nom, note: '', invalideLe: null, motifInvalidation: '' },
+    { id: 'cyc_147', numero: '147', date: jour(-8, 8, 10), sterilisateur: 'Autoclave 1', type: 'autoclave_b',
+      temperature: 134, dureePalier: 18, charge: 'Instruments de chirurgie, 4 sachets',
+      indicateurPhysique: true, indicateurChimique: true, indicateurBiologique: true,
+      operateur: p1.nom, note: 'Test de spores hebdomadaire.', invalideLe: null, motifInvalidation: '' },
+    { id: 'cyc_148', numero: '148', date: jour(-5, 8, 5), sterilisateur: 'Autoclave 1', type: 'autoclave_b',
+      temperature: 134, dureePalier: 18, charge: 'Plateaux de soins conservateurs, 8 sachets',
+      indicateurPhysique: true, indicateurChimique: true, indicateurBiologique: false,
+      operateur: p1.nom, note: '', invalideLe: jour(-3, 9, 0),
+      motifInvalidation: 'Test de spores positif reçu le surlendemain. Charge entière à reprendre.' },
+    { id: 'cyc_149', numero: '149', date: jour(-3, 8, 20), sterilisateur: 'Autoclave 1', type: 'autoclave_b',
+      temperature: 134, dureePalier: 18, charge: 'Reprise de la charge du cycle 148',
+      indicateurPhysique: true, indicateurChimique: true, indicateurBiologique: true,
+      operateur: p1.nom, note: 'Cycle de contrôle après incident. Conforme.', invalideLe: null, motifInvalidation: '' },
+    { id: 'cyc_150', numero: '150', date: jour(-1, 8, 0), sterilisateur: 'Autoclave 1', type: 'autoclave_b',
+      temperature: 134, dureePalier: 18, charge: 'Plateaux de consultation, 6 sachets',
+      indicateurPhysique: true, indicateurChimique: true, indicateurBiologique: null,
+      operateur: p1.nom, note: '', invalideLe: null, motifInvalidation: '' },
+  ];
+
+  const utilisationsCycle: UtilisationCycle[] = [
+    { id: 'uti_1', cycleId: 'cyc_146', patientId: 'pat_1', date: jour(-9, 9, 30), acte: 'Consultation de contrôle' },
+    { id: 'uti_2', cycleId: 'cyc_147', patientId: 'pat_5', date: jour(-8, 10, 0), acte: 'Avulsion 45' },
+    { id: 'uti_3', cycleId: 'cyc_148', patientId: 'pat_2', date: jour(-5, 9, 0), acte: 'Composite 36' },
+    { id: 'uti_4', cycleId: 'cyc_148', patientId: 'pat_7', date: jour(-5, 11, 15), acte: 'Reconstitution 21' },
+    { id: 'uti_5', cycleId: 'cyc_150', patientId: 'pat_3', date: jour(-1, 9, 45), acte: 'Scellement de sillons' },
+  ];
+
   return {
     version: VERSION_DEMO,
     cabinet,
     fournisseurs,
     stock,
+    cycles,
+    utilisationsCycle,
     patients,
     odontogrammes,
     actes,
@@ -606,7 +653,7 @@ function journalDemo(
       patientId,
       dent: dent.numero,
       cible: `Dent ${dent.numero}`,
-      resume: `Dent ${dent.numero} : ${dent.etat}${dent.faces.length ? ` (faces ${dent.faces.join('/')})` : ''}.`,
+      resume: `Dent ${dent.numero} : ${ETATS[dent.etat]?.libelle ?? dent.etat}${dent.faces.length ? ` (faces ${dent.faces.join('/')})` : ''}.`,
       avant: null,
       apres: dent,
     });
