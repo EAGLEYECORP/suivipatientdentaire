@@ -8,7 +8,7 @@ import {
   tauxRegime,
   trouverActeDans,
 } from '@/data/nomenclatures';
-import { importerJSON } from '@/lib/storage';
+import { importerJSON, VERSION_DONNEES } from '@/lib/storage';
 import { donneesDemo } from '@/data/seed';
 
 describe('jeux de nomenclature', () => {
@@ -79,7 +79,7 @@ describe('migration des sauvegardes antérieures', () => {
     };
     const migre = importerJSON(JSON.stringify(ancien));
 
-    expect(migre.version).toBe(3);
+    expect(migre.version).toBe(VERSION_DONNEES);
     expect(migre.actes[0].tarifReference).toBe(42);
     // Les anciennes sauvegardes étaient nécessairement françaises.
     expect(migre.cabinet.nomenclature).toBe('ccam-fr');

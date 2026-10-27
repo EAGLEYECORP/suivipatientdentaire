@@ -192,6 +192,50 @@ export interface Odontogramme {
   dents: DentEtat[];
 }
 
+/* ------------------------------------------------------------------ *
+ * Approvisionnement : stock de consommables et fournisseurs.
+ *
+ * Ces données ne sont pas cliniques. Elles ne passent donc pas par le
+ * journal du dossier : y inscrire « boîte de gants réapprovisionnée »
+ * diluerait une piste d'audit qui ne doit porter que sur le soin.
+ * ------------------------------------------------------------------ */
+
+export type CategorieFourniture =
+  | 'hygiene'
+  | 'anesthesie'
+  | 'restauration'
+  | 'endodontie'
+  | 'chirurgie'
+  | 'prothese'
+  | 'imagerie'
+  | 'cabinet';
+
+export interface Fournisseur {
+  id: string;
+  nom: string;
+  contact: string;
+  telephone: string;
+  email: string;
+  note: string;
+}
+
+export interface ArticleStock {
+  id: string;
+  libelle: string;
+  categorie: CategorieFourniture;
+  /** Boîte, flacon, sachet : l'unité dans laquelle on commande. */
+  unite: string;
+  /** Référence du fournisseur, reprise telle quelle sur le bon de commande. */
+  reference: string;
+  stock: number;
+  /** Au-dessous, l'article est à recommander. */
+  seuil: number;
+  /** Quantité commandée par défaut quand on réapprovisionne. */
+  quantiteCommande: number;
+  prixUnitaire: number;
+  fournisseurId: string | null;
+}
+
 /** Everything the app persists. */
 export interface AppData {
   version: number;
@@ -208,6 +252,8 @@ export interface AppData {
   images: ImageClinique[];
   devis: Devis[];
   ordonnances: Ordonnance[];
+  fournisseurs: Fournisseur[];
+  stock: ArticleStock[];
 }
 
 /* ------------------------------------------------------------------ *

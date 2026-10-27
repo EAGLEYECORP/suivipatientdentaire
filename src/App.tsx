@@ -21,6 +21,10 @@ const Traitements = lazy(() => import('@/pages/Traitements').then((m) => ({ defa
 const Facturation = lazy(() => import('@/pages/Facturation').then((m) => ({ default: m.Facturation })));
 const Pilotage = lazy(() => import('@/pages/Pilotage').then((m) => ({ default: m.Pilotage })));
 const Parametres = lazy(() => import('@/pages/Parametres').then((m) => ({ default: m.Parametres })));
+const Veille = lazy(() => import('@/pages/Veille').then((m) => ({ default: m.Veille })));
+const Approvisionnement = lazy(() =>
+  import('@/pages/Approvisionnement').then((m) => ({ default: m.Approvisionnement })),
+);
 
 function Chargement() {
   return (
@@ -98,6 +102,22 @@ function Racine() {
             element={
               <Suspense fallback={<Chargement />}>
                 <Parametres />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/veille"
+            element={
+              <Suspense fallback={<Chargement />}>
+                <Veille />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/approvisionnement"
+            element={
+              <Suspense fallback={<Chargement />}>
+                <Approvisionnement />
               </Suspense>
             }
           />

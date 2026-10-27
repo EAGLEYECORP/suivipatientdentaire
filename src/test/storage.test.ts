@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CLE_STOCKAGE, charger, effacer, exporterJSON, importerJSON, sauvegarder } from '@/lib/storage';
+import { CLE_STOCKAGE, charger, effacer, exporterJSON, importerJSON, sauvegarder, VERSION_DONNEES } from '@/lib/storage';
 import { donneesDemo, donneesVides } from '@/data/seed';
 
 describe('persistance locale', () => {
@@ -125,8 +125,17 @@ describe('coffre et magasin', () => {
       ],
     };
     const migre = importerJSON(JSON.stringify(ancien));
-    expect(migre.version).toBe(3);
+    expect(migre.version).toBe(VERSION_DONNEES);
     expect(migre.patients[0].allergies).toEqual(['Pénicilline']);
+    /*
+     * Version 4 : un cabinet qui met à jour doit trouver les deux tableaux
+     * d'approvisionnement prêts, et vides. Les créer absents ferait planter
+     * la page au premier affichage.
+     */
+    expect(Array.isArray(migre.fournisseurs)).toBe(true);
+    expect(Array.isArray(migre.stock)).toBe(true);
+    expect(migre.fournisseurs).toEqual([]);
+    expect(migre.stock).toEqual([]);
     // Les champs nouveaux reçoivent des valeurs sûres.
     expect(migre.patients[0].facteursRisque.tabac).toBe('non');
     expect(migre.patients[0].rappelMois).toBe(6);

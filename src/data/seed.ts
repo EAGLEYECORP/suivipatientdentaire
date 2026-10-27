@@ -1,6 +1,9 @@
+import { CATALOGUE_DEPART } from '@/data/fournitures';
 import type {
   AppData,
   Acte,
+  ArticleStock,
+  Fournisseur,
   DentEtat,
   EvenementJournal,
   LigneDevis,
@@ -73,6 +76,8 @@ export function donneesVides(): AppData {
   return {
     version: 1,
     cabinet: cabinetParDefaut(),
+    fournisseurs: [],
+    stock: [],
     patients: [],
     odontogrammes: [],
     actes: [],
@@ -378,9 +383,57 @@ export function donneesDemo(): AppData {
     { id: uid('note'), patientId: 'pat_7', date: jour(-2, 17, 0), auteur: p1.nom, categorie: 'urgence', contenu: 'Fracture coronaire 21 suite à une chute. Test de vitalité positif. Reconstitution provisoire posée.', dents: [21] },
   ];
 
+  const fournisseurs: Fournisseur[] = [
+    {
+      id: 'four_1',
+      nom: 'Dépôt Dentaire Rivoli',
+      contact: 'Service commandes',
+      telephone: '01 44 78 20 15',
+      email: 'commandes@exemple-rivoli.fr',
+      note: 'Livraison sous 48 h.',
+    },
+    {
+      id: 'four_2',
+      nom: 'Matériel Médical Lemoine',
+      contact: 'Karine Lemoine',
+      telephone: '03 88 41 62 09',
+      email: 'k.lemoine@exemple-lemoine.fr',
+      note: 'Franco de port à partir de 250 €.',
+    },
+  ];
+
+  /*
+   * Stock de démonstration : quelques articles sont volontairement au seuil
+   * ou en dessous, pour que la page d'approvisionnement montre son travail
+   * dès la première ouverture plutôt qu'une liste au vert.
+   */
+  const niveaux: Array<[number, number, number, number]> = [
+    // [index catalogue, stock, seuil, prix unitaire dans la devise du cabinet]
+    [0, 2, 4, 8.4], [1, 12, 4, 6.2], [2, 1, 2, 14.9], [3, 7, 3, 11.5],
+    [4, 3, 3, 34.0], [5, 9, 3, 9.3], [6, 2, 4, 24.5], [7, 5, 2, 58.0],
+    [8, 1, 2, 7.8], [9, 6, 2, 29.0], [10, 4, 2, 84.0], [11, 2, 3, 5.6],
+    [12, 3, 2, 19.5], [13, 5, 2, 41.0], [14, 20, 8, 3.9], [15, 3, 2, 46.0],
+    [16, 4, 3, 12.0], [17, 6, 2, 17.5], [18, 2, 5, 15.0], [19, 9, 3, 7.5],
+  ];
+
+  const stock: ArticleStock[] = niveaux.map(([i, enStock, seuil, prix], rang) => ({
+    id: `art_${rang + 1}`,
+    libelle: CATALOGUE_DEPART[i].libelle,
+    categorie: CATALOGUE_DEPART[i].categorie,
+    unite: CATALOGUE_DEPART[i].unite,
+    quantiteCommande: CATALOGUE_DEPART[i].quantiteCommande,
+    reference: `REF-${String(rang + 1).padStart(4, '0')}`,
+    stock: enStock,
+    seuil,
+    prixUnitaire: prix,
+    fournisseurId: rang % 3 === 2 ? 'four_2' : 'four_1',
+  }));
+
   return {
     version: VERSION_DEMO,
     cabinet,
+    fournisseurs,
+    stock,
     patients,
     odontogrammes,
     actes,

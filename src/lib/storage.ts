@@ -10,7 +10,7 @@ import { facteursRisqueVides } from '@/data/seed';
 import { NOMENCLATURE_PAR_DEFAUT, nomenclature } from '@/data/nomenclatures';
 
 export const CLE_STOCKAGE = 'suivi-patient-dentaire:v1';
-export const VERSION_DONNEES = 3;
+export const VERSION_DONNEES = 4;
 
 export type Enveloppe =
   | { etat: 'vide' }
@@ -132,6 +132,11 @@ export function migrer(data: AppData): AppData {
       variantes: (d.variantes ?? []).map((v) => ({ ...v, lignes: (v.lignes ?? []).map(migrerTarifReference) })),
     })),
     ordonnances: data.ordonnances ?? [],
+    // Version 4 : approvisionnement. Les sauvegardes antérieures n'ont ni
+    // fournisseurs ni stock ; un cabinet existant part d'une liste vide et
+    // la remplit à son rythme, sans qu'on lui impose un catalogue.
+    fournisseurs: data.fournisseurs ?? [],
+    stock: data.stock ?? [],
   };
 }
 

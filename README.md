@@ -172,6 +172,45 @@ insensible aux accents sur nom, téléphone, e-mail, numéro de sécurité socia
 
 ---
 
+### Veille professionnelle
+
+Un fil embarqué sur les technologies, la recherche et le cadre de remboursement. Il est **livré
+avec le logiciel et daté** : l'application ne passe aucun appel réseau, et un fil qui interrogerait
+un serveur contredirait sa promesse centrale. Il est mis à jour avec les versions, ce qui donne à
+la maintenance annuelle un contenu tangible.
+
+Trois règles, tenues par les tests plutôt que par la discipline (`src/test/veille.test.ts`) :
+
+- **une source vérifiable** par entrée, sinon elle ne figure pas ; les affirmations de blogs
+  commerciaux ont été écartées ;
+- **un niveau de maturité**, parce que « repousse dentaire obtenue chez le furet » et « proposable
+  au patient » ne sont pas la même information ;
+- **une réserve**, toujours, affichée dans un encadré plutôt qu'en note de bas de page. Une veille
+  qui n'énonce que des promesses est une brochure.
+
+La page avoue son âge : passé six mois sans mise à jour, elle prévient que l'absence de nouvelle
+est plus probablement un défaut de mise à jour qu'un calme du secteur.
+
+### Approvisionnement
+
+Stock des consommables, seuils de réapprovisionnement et bons de commande imprimables, groupés par
+fournisseur.
+
+- La quantité commandée repasse **strictement au-dessus** du seuil, arrondie au conditionnement :
+  commander juste de quoi revenir au seuil rallumerait l'alerte dès la livraison rangée.
+- Les articles sans fournisseur forment un lot à part au lieu d'être écartés : ce que le praticien
+  a oublié de rattacher doit rester visible.
+- Supprimer un fournisseur **détache** ses articles au lieu de les supprimer.
+- Ces données ne passent pas par le journal clinique. Y inscrire « boîte de gants réapprovisionnée »
+  diluerait une piste d'audit dont toute la valeur tient à ce qu'elle ne contient que du soin.
+
+Le catalogue de départ ne nomme **aucune marque et aucun fournisseur** : ce sont des désignations
+génériques proposées en autocomplétion, que le cabinet remplace par ses propres références.
+
+**Ce n'est pas une place de marché.** Il n'y a ni commande en ligne, ni paiement, ni catalogue
+distant : cela demanderait un serveur, des fournisseurs sous contrat et un prestataire de paiement,
+c'est-à-dire exactement ce que ce logiciel n'a pas.
+
 ## Sécurité et confidentialité
 
 Les données ne quittent jamais le poste : **aucun serveur, aucun envoi réseau, aucune dépendance CDN**.
@@ -301,6 +340,8 @@ src/
     crypto.ts                Coffre AES-GCM / PBKDF2
     storage.ts               Persistance, migrations, export/import
     imagerie.ts              IndexedDB, vignettes, chiffrement des binaires
+    fournitures.ts           Seuils, quantités à commander, groupement par fournisseur
+    veille.ts                Fil professionnel daté, sources et niveaux de maturité
     dicom.ts                 Lecture des DICOM non compressés, fenêtrage, conversion
     decision.ts              Règles cliniques et profils de risque
     historique.ts            Rejeu du journal, biographie, activité

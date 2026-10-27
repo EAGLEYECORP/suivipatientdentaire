@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type {
+  ArticleStock,
+  Fournisseur,
   Acte,
   AppData,
   Cabinet,
@@ -87,6 +89,13 @@ export interface AppActions {
   supprimerCharting: (id: string) => void;
 
   // Imagerie
+  ajouterArticle: (a: Omit<ArticleStock, 'id'>) => ArticleStock;
+  majArticle: (id: string, patch: Partial<ArticleStock>) => void;
+  supprimerArticle: (id: string) => void;
+  ajusterStock: (id: string, delta: number) => void;
+  ajouterFournisseur: (f: Omit<Fournisseur, 'id'>) => Fournisseur;
+  majFournisseur: (id: string, patch: Partial<Fournisseur>) => void;
+  supprimerFournisseur: (id: string) => void;
   ajouterImage: (i: Omit<ImageClinique, 'id' | 'creeLe'>, id?: string) => ImageClinique;
   majImage: (id: string, patch: Partial<ImageClinique>) => void;
   supprimerImage: (id: string) => void;
@@ -797,6 +806,89 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
     [muter, data.chartingsParo],
   );
 
+  /* ------------------------------------------- Approvisionnement */
+
+  /*
+   * Ces mutations n'écrivent pas au journal clinique. Le stock de gants
+   * n'est pas un acte de soin, et mêler les deux affaiblirait une piste
+   * d'audit dont toute la valeur tient à ce qu'elle ne contient que du soin.
+   */
+
+  const ajouterArticle = useCallback(
+    (a: Omit<ArticleStock, 'id'>) => {
+      const article: ArticleStock = { ...a, id: uid('art') };
+      muter((d) => ({ ...d, stock: [...d.stock, article] }), null);
+      return article;
+    },
+    [muter],
+  );
+
+  const majArticle = useCallback(
+    (id: string, patch: Partial<ArticleStock>) => {
+      muter((d) => ({ ...d, stock: d.stock.map((a) => (a.id === id ? { ...a, ...patch } : a)) }), null);
+    },
+    [muter],
+  );
+
+  const supprimerArticle = useCallback(
+    (id: string) => {
+      muter((d) => ({ ...d, stock: d.stock.filter((a) => a.id !== id) }), null);
+    },
+    [muter],
+  );
+
+  /** Un stock ne descend pas sous zéro : on ne possède pas moins que rien. */
+  const ajusterStock = useCallback(
+    (id: string, delta: number) => {
+      muter(
+        (d) => ({
+          ...d,
+          stock: d.stock.map((a) => (a.id === id ? { ...a, stock: Math.max(0, a.stock + delta) } : a)),
+        }),
+        null,
+      );
+    },
+    [muter],
+  );
+
+  const ajouterFournisseur = useCallback(
+    (f: Omit<Fournisseur, 'id'>) => {
+      const fournisseur: Fournisseur = { ...f, id: uid('four') };
+      muter((d) => ({ ...d, fournisseurs: [...d.fournisseurs, fournisseur] }), null);
+      return fournisseur;
+    },
+    [muter],
+  );
+
+  const majFournisseur = useCallback(
+    (id: string, patch: Partial<Fournisseur>) => {
+      muter(
+        (d) => ({ ...d, fournisseurs: d.fournisseurs.map((f) => (f.id === id ? { ...f, ...patch } : f)) }),
+        null,
+      );
+    },
+    [muter],
+  );
+
+  /*
+   * Supprimer un fournisseur ne supprime pas ses articles : on détache. Le
+   * cabinet garde son stock et le rattachera ailleurs, plutôt que de perdre
+   * vingt références parce qu'il a changé de dépôt.
+   */
+  const supprimerFournisseur = useCallback(
+    (id: string) => {
+      muter(
+        (d) => ({
+          ...d,
+          fournisseurs: d.fournisseurs.filter((f) => f.id !== id),
+          stock: d.stock.map((a) => (a.fournisseurId === id ? { ...a, fournisseurId: null } : a)),
+        }),
+        null,
+      );
+    },
+    [muter],
+  );
+
   /* -------------------------------------------------- Imagerie */
 
   const ajouterImage = useCallback(
@@ -1119,6 +1211,13 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       supprimerNote,
       enregistrerCharting,
       supprimerCharting,
+      ajouterArticle,
+      majArticle,
+      supprimerArticle,
+      ajusterStock,
+      ajouterFournisseur,
+      majFournisseur,
+      supprimerFournisseur,
       ajouterImage,
       majImage,
       supprimerImage,
