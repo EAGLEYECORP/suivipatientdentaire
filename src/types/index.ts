@@ -309,6 +309,10 @@ export interface AppData {
   stock: ArticleStock[];
   cycles: CycleSterilisation[];
   utilisationsCycle: UtilisationCycle[];
+  /** Ordres de laboratoire (prothèses, gouttières, etc.). */
+  ordresLab: OrdreLab[];
+  /** Templates de communication patient (SMS, email, courrier). */
+  templatesComm: TemplateCommunication[];
 }
 
 /* ------------------------------------------------------------------ *
@@ -348,6 +352,9 @@ export type TypeEvenement =
   | 'devis.maj'
   | 'devis.decide'
   | 'ordonnance.cree'
+  | 'ordre_lab.cree'
+  | 'ordre_lab.maj'
+  | 'ordre_lab.supprime'
   | 'cabinet.maj'
   | 'donnees.importees'
   | 'donnees.effacees';
@@ -494,4 +501,69 @@ export interface Ordonnance {
   lignes: LigneOrdonnance[];
   notes: string;
   creeLe: string;
+}
+
+/* ------------------------------------------------------------------ *
+ * Ordres de laboratoire (prothèse, orthodontie, etc.)
+ * ------------------------------------------------------------------ */
+
+export type TypeOrdreLab =
+  | 'couronne'
+  | 'bridge'
+  | 'facette'
+  | 'inlay_onlay'
+  | 'prothese_amovible'
+  | 'implant_guide'
+  | 'gouttiere'
+  | 'appareil_ortho'
+  | 'autre';
+
+export type StatutOrdreLab =
+  | 'brouillon'
+  | 'envoye'
+  | 'en_fabrication'
+  | 'recu'
+  | 'essaye'
+  | 'pose'
+  | 'annule';
+
+export interface OrdreLab {
+  id: string;
+  patientId: string;
+  dents: number[];
+  type: TypeOrdreLab;
+  libelle: string;
+  laboratoire: string;
+  dateEnvoi: string | null;
+  datePrevue: string | null;
+  dateReception: string | null;
+  statut: StatutOrdreLab;
+  teinte: string;
+  materiau: string;
+  instructions: string;
+  praticien: string;
+  notes: string;
+  creeLe: string;
+}
+
+/* ------------------------------------------------------------------ *
+ * Matériel de communication patient (templates SMS / courriers)
+ * ------------------------------------------------------------------ */
+
+export type TypeTemplateComm =
+  | 'rappel_rdv'
+  | 'suivi_post_soin'
+  | 'relance_devis'
+  | 'rappel_controle'
+  | 'anniversaire'
+  | 'autre';
+
+export interface TemplateCommunication {
+  id: string;
+  type: TypeTemplateComm;
+  nom: string;
+  canal: 'sms' | 'email' | 'courrier';
+  sujet: string;
+  corps: string;
+  actif: boolean;
 }

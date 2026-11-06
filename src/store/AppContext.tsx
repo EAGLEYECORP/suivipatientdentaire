@@ -19,6 +19,7 @@ import type {
   NoteClinique,
   Odontogramme,
   Ordonnance,
+  OrdreLab,
   Paiement,
   Patient,
   RendezVous,
@@ -118,6 +119,11 @@ export interface AppActions {
   // Ordonnances
   ajouterOrdonnance: (o: Omit<Ordonnance, 'id' | 'creeLe'>) => Ordonnance;
   supprimerOrdonnance: (id: string) => void;
+
+  // Ordres de laboratoire
+  ajouterOrdreLab: (o: Omit<OrdreLab, 'id' | 'creeLe'>) => OrdreLab;
+  majOrdreLab: (id: string, patch: Partial<OrdreLab>) => void;
+  supprimerOrdreLab: (id: string) => void;
 
   // Cabinet & données
   majCabinet: (patch: Partial<Cabinet>) => void;
@@ -364,6 +370,7 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
           images: d.images.filter((i) => i.patientId !== id),
           devis: d.devis.filter((x) => x.patientId !== id),
           ordonnances: d.ordonnances.filter((o) => o.patientId !== id),
+          ordresLab: (d.ordresLab ?? []).filter((o) => o.patientId !== id),
         }),
         avant
           ? {
@@ -1206,6 +1213,60 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
     [muter],
   );
 
+  /* -------------------------------------------------- Ordres de laboratoire */
+
+  const ajouterOrdreLab = useCallback(
+    (o: Omit<OrdreLab, 'id' | 'creeLe'>) => {
+      const ordre: OrdreLab = { ...o, id: uid('lab'), creeLe: maintenant() };
+      muter((d) => ({ ...d, ordresLab: [...(d.ordresLab ?? []), ordre] }), {
+        type: 'ordre_lab.cree',
+        patientId: ordre.patientId,
+        cible: ordre.libelle,
+        resume: `Ordre lab « ${ordre.libelle} » créé (${ordre.type}).`,
+        apres: ordre,
+      });
+      return ordre;
+    },
+    [muter],
+  );
+
+  const majOrdreLab = useCallback(
+    (id: string, patch: Partial<OrdreLab>) => {
+      muter(
+        (d) => ({
+          ...d,
+          ordresLab: (d.ordresLab ?? []).map((o) => (o.id === id ? { ...o, ...patch } : o)),
+        }),
+        {
+          type: 'ordre_lab.maj',
+          patientId: null,
+          cible: id,
+          resume: `Ordre lab mis à jour.`,
+          apres: patch,
+        },
+      );
+    },
+    [muter],
+  );
+
+  const supprimerOrdreLab = useCallback(
+    (id: string) => {
+      muter(
+        (d) => ({
+          ...d,
+          ordresLab: (d.ordresLab ?? []).filter((o) => o.id !== id),
+        }),
+        {
+          type: 'ordre_lab.supprime',
+          patientId: null,
+          cible: id,
+          resume: `Ordre lab supprimé.`,
+        },
+      );
+    },
+    [muter],
+  );
+
   /* -------------------------------------------------- Cabinet & données */
 
   const majCabinet = useCallback(
@@ -1358,6 +1419,9 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       basculerDevisEnPlan,
       ajouterOrdonnance,
       supprimerOrdonnance,
+      ajouterOrdreLab,
+      majOrdreLab,
+      supprimerOrdreLab,
       majCabinet,
       setPraticienActif,
       remplacerDonnees,
@@ -1407,6 +1471,9 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
       basculerDevisEnPlan,
       ajouterOrdonnance,
       supprimerOrdonnance,
+      ajouterOrdreLab,
+      majOrdreLab,
+      supprimerOrdreLab,
       majCabinet,
       remplacerDonnees,
       chargerDemo,

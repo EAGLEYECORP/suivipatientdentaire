@@ -18,6 +18,7 @@ import { OngletHistorique } from '@/components/OngletHistorique';
 import { OngletImagerie } from '@/components/OngletImagerie';
 import { OngletDevis } from '@/components/OngletDevis';
 import { OngletOrdonnances } from '@/components/OngletOrdonnances';
+import { OngletLab } from '@/components/lab/OngletLab';
 import { PanneauAlertes } from '@/components/PanneauAlertes';
 import { PanneauRisques } from '@/components/PanneauRisques';
 import { biographieDent, datesClesSchema, odontogrammeADate } from '@/lib/historique';
@@ -46,7 +47,19 @@ import {
   maintenant,
 } from '@/lib/utils';
 
-type Onglet = 'schema' | 'parodontie' | 'imagerie' | 'traitements' | 'devis' | 'ordonnances' | 'agenda' | 'notes' | 'facturation' | 'dossier' | 'historique';
+type Onglet =
+  | 'schema'
+  | 'parodontie'
+  | 'imagerie'
+  | 'traitements'
+  | 'devis'
+  | 'ordonnances'
+  | 'lab'
+  | 'agenda'
+  | 'notes'
+  | 'facturation'
+  | 'dossier'
+  | 'historique';
 
 const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'schema', label: 'Schéma dentaire' },
@@ -55,6 +68,7 @@ const ONGLETS: Array<{ cle: Onglet; label: string }> = [
   { cle: 'traitements', label: 'Plan de traitement' },
   { cle: 'devis', label: 'Devis' },
   { cle: 'ordonnances', label: 'Ordonnances' },
+  { cle: 'lab', label: 'Laboratoire' },
   { cle: 'agenda', label: 'Rendez-vous' },
   { cle: 'notes', label: 'Notes cliniques' },
   { cle: 'facturation', label: 'Facturation' },
@@ -574,6 +588,12 @@ export function PatientDetail() {
       {onglet === 'devis' ? <OngletDevis patient={patient} /> : null}
 
       {onglet === 'ordonnances' ? <OngletOrdonnances patient={patient} /> : null}
+
+      {onglet === 'lab' ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <OngletLab patientId={patient.id} />
+        </div>
+      ) : null}
 
       {onglet === 'traitements' ? (
         <Card>

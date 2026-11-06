@@ -10,7 +10,7 @@ import { facteursRisqueVides } from '@/data/seed';
 import { NOMENCLATURE_PAR_DEFAUT, nomenclature } from '@/data/nomenclatures';
 
 export const CLE_STOCKAGE = 'suivi-patient-dentaire:v1';
-export const VERSION_DONNEES = 5;
+export const VERSION_DONNEES = 6;
 
 export type Enveloppe =
   | { etat: 'vide' }
@@ -141,7 +141,56 @@ export function migrer(data: AppData): AppData {
     // cabinet existant, qui le remplit à partir de son prochain cycle.
     cycles: data.cycles ?? [],
     utilisationsCycle: data.utilisationsCycle ?? [],
+    // Version 6 : ordres de laboratoire et templates de communication.
+    ordresLab: data.ordresLab ?? [],
+    templatesComm: data.templatesComm ?? templatesCommParDefaut(),
   };
+}
+
+/** Templates de communication fournis avec le produit. */
+function templatesCommParDefaut() {
+  return [
+    {
+      id: 'tpl-rappel-rdv',
+      type: 'rappel_rdv' as const,
+      nom: 'Rappel de rendez-vous',
+      canal: 'sms' as const,
+      sujet: '',
+      corps:
+        'Bonjour {prenom}, nous vous rappelons votre rendez-vous le {date} à {heure} au cabinet {cabinet}. En cas d’empêchement, merci de nous prévenir. À bientôt.',
+      actif: true,
+    },
+    {
+      id: 'tpl-suivi-post',
+      type: 'suivi_post_soin' as const,
+      nom: 'Suivi post-soin (48h)',
+      canal: 'sms' as const,
+      sujet: '',
+      corps:
+        'Bonjour {prenom}, comment allez-vous après votre soin de {date} ? N’hésitez pas à nous contacter si vous avez la moindre question. L’équipe du cabinet {cabinet}.',
+      actif: true,
+    },
+    {
+      id: 'tpl-relance-devis',
+      type: 'relance_devis' as const,
+      nom: 'Relance de devis',
+      canal: 'email' as const,
+      sujet: 'Suite à votre consultation – devis',
+      corps:
+        'Bonjour {prenom},\n\nNous revenons vers vous concernant le devis qui vous a été remis. Nous restons à votre disposition pour toute question.\n\nCordialement,\n{cabinet}',
+      actif: true,
+    },
+    {
+      id: 'tpl-rappel-controle',
+      type: 'rappel_controle' as const,
+      nom: 'Rappel de contrôle',
+      canal: 'sms' as const,
+      sujet: '',
+      corps:
+        'Bonjour {prenom}, il est temps de planifier votre contrôle dentaire. Contactez-nous pour prendre rendez-vous. Cabinet {cabinet}.',
+      actif: true,
+    },
+  ];
 }
 
 export function exporterJSON(data: AppData): string {

@@ -77,7 +77,7 @@ export function cabinetParDefaut(): AppData['cabinet'] {
 
 export function donneesVides(): AppData {
   return {
-    version: 1,
+    version: 6,
     cabinet: cabinetParDefaut(),
     fournisseurs: [],
     stock: [],
@@ -94,6 +94,8 @@ export function donneesVides(): AppData {
     images: [],
     devis: [],
     ordonnances: [],
+    ordresLab: [],
+    templatesComm: [],
   };
 }
 
@@ -492,6 +494,8 @@ export function donneesDemo(): AppData {
     images: [],
     devis: devisDemo(p1.nom),
     ordonnances: [],
+    ordresLab: [],
+    templatesComm: [],
   };
 }
 
