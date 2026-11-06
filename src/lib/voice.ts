@@ -2,6 +2,9 @@
  * Dictée vocale via l’API Web Speech (Chrome, Edge, Safari récents).
  * Fonctionne hors ligne une fois le modèle de langue chargé par le navigateur.
  * Retourne null si l’API n’est pas disponible.
+ *
+ * Types locaux : l’API Web Speech n’est pas toujours présente dans les
+ * définitions DOM de TypeScript selon la version / la config `types`.
  */
 
 export type EtatDictée = 'indisponible' | 'arretee' | 'ecoute' | 'erreur';
@@ -16,13 +19,34 @@ export interface ControleDictée {
   final: string;
 }
 
-type SpeechRecognitionCtor = new () => SpeechRecognition;
+/** Sous-ensemble minimal de l’interface SpeechRecognition (Web Speech API). */
+interface ReconnaissanceVocale {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: ResultatReconnaissance) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
 
-function obtenirConstructeur(): SpeechRecognitionCtor | null {
+interface ResultatReconnaissance {
+  resultIndex: number;
+  results: ArrayLike<{
+    isFinal: boolean;
+    0: { transcript: string };
+  }>;
+}
+
+type ConstructeurReconnaissance = new () => ReconnaissanceVocale;
+
+function obtenirConstructeur(): ConstructeurReconnaissance | null {
   if (typeof window === 'undefined') return null;
   const w = window as unknown as {
-    SpeechRecognition?: SpeechRecognitionCtor;
-    webkitSpeechRecognition?: SpeechRecognitionCtor;
+    SpeechRecognition?: ConstructeurReconnaissance;
+    webkitSpeechRecognition?: ConstructeurReconnaissance;
   };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
@@ -52,7 +76,7 @@ export function creerDictée(options: {
     };
   }
 
-  let recognition: SpeechRecognition | null = null;
+  let recognition: ReconnaissanceVocale | null = null;
   let etat: EtatDictée = 'arretee';
   let partiel = '';
   let final = '';
@@ -67,7 +91,7 @@ export function creerDictée(options: {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: ResultatReconnaissance) => {
       let interim = '';
       let confirmed = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
